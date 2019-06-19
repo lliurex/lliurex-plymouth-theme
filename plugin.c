@@ -16,100 +16,102 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#define LX_MAX_SCREENS 4
+
+#include "log.h"
+
 #include <ply-boot-splash-plugin.h>
 #include <ply-logger.h>
 #include <ply-image.h>
 #include <ply-label.h>
 
-#include <systemd/sd-journal.h>
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-#ifdef NDEBUG
-/*
- * Push debug messages to system journal
- * only defined when compiled with debug mode
-*/
-static void log_debug(char* format,...)
-{
-    va_list arg;
-    va_start(arg, format);
-    sd_journal_printv(LOG_DEBUG,format,arg);
-    va_end(arg);
-}
-#else
-#define log_debug(format,...) ((void)0)
-#endif
-
-/*
- * Push info messaged to system journal
-*/
-static void log_info(const char* format,...)
-{
-    va_list arg;
-    va_start(arg, format);
-    sd_journal_printv(LOG_INFO,format,arg);
-    va_end(arg);
-}
-
-/*
- * Push error messages to system journal
-*/
-static void log_error(const char* format,...)
-{
-    va_list arg;
-    va_start(arg, format);
-    sd_journal_printv(LOG_ERR,format,arg);
-    va_end(arg);
-}
+typedef struct {
+    uint32_t id;
+    ply_pixel_display_t* display;
+} lx_screen_t;
 
 /*
  * Plugin structure
 */
 struct _ply_boot_splash_plugin 
 {
+    lx_screen_t screen[LX_MAX_SCREENS];
+    size_t screens;
 };
 
 static ply_boot_splash_plugin_t*
 create_plugin (ply_key_file_t* key_file)
 {
-    log_debug(__PRETTY_FUNCTION__);
+    lx_log_debug(__PRETTY_FUNCTION__);
+    
+    ply_boot_splash_plugin_t* plugin=0;
+    
+    plugin=calloc(1,sizeof(ply_boot_splash_plugin_t));
+    
+    return plugin;
 }
 
 static void
 destroy_plugin (ply_boot_splash_plugin_t* plugin)
 {
-    log_debug(__PRETTY_FUNCTION__);
+    lx_log_debug(__PRETTY_FUNCTION__);
+    
+    free(plugin);
 }
 
 static void
 set_keyboard (ply_boot_splash_plugin_t* plugin,
               ply_keyboard_t* keyboard)
 {
-    log_debug(__PRETTY_FUNCTION__);
+    lx_log_debug(__PRETTY_FUNCTION__);
 }
 
 static void
 unset_keyboard (ply_boot_splash_plugin_t* plugin,
                 ply_keyboard_t* keyboard)
 {
-    log_debug(__PRETTY_FUNCTION__);
+    lx_log_debug(__PRETTY_FUNCTION__);
 }
 
 static void
 add_pixel_display (ply_boot_splash_plugin_t* plugin,
                    ply_pixel_display_t* display)
 {
-    log_debug(__PRETTY_FUNCTION__);
+    lx_log_debug(__PRETTY_FUNCTION__);
+    
+    static uint32_t id=0;
+    
+    if (plugin->screens<=LX_MAX_SCREENS) {
+        for (size_t n=0;n<LX_MAX_SCREENS;n++) {
+            if (plugin->screen[n]->display==NULL) {
+                plugin->screen[n]->display=display;
+                plugin->screen[n]->id=id;
+                break;
+            }
+        }
+        plugin->screens++;
+    }
+    else {
+        lx_log_info("Ignoring new pixel display");
+    }
 }
 
 static void
 remove_pixel_display (ply_boot_splash_plugin_t* plugin,
                       ply_pixel_display_t* display)
 {
-    log_debug(__PRETTY_FUNCTION__);
+    lx_log_debug(__PRETTY_FUNCTION__);
+    
+    for (size_t n=0;n<LX_MAX_SCREENS;n++) {
+        if (plugin->screen[n]->display==display) {
+            plugin->screen[n]->display=NULL;
+            plugin->screens--;
+        }
+    }
 }
 
 static bool
@@ -118,15 +120,15 @@ show_splash_screen (ply_boot_splash_plugin_t* plugin,
                     ply_buffer_t* boot_buffer,
                     ply_boot_splash_mode_t mode)
 {
-    log_debug(__PRETTY_FUNCTION__);
+    lx_log_debug(__PRETTY_FUNCTION__);
 }
 
 static void
 update_status (ply_boot_splash_plugin_t* plugin,
                const char* status)
 {
-    log_debug(__PRETTY_FUNCTION__);
-    log_info(status);
+    lx_log_debug(__PRETTY_FUNCTION__);
+    lx_log_info(status);
 }
 
 static void
@@ -140,27 +142,27 @@ static void
 hide_splash_screen (ply_boot_splash_plugin_t* plugin,
                     ply_event_loop_t* loop)
 {
-    log_debug(__PRETTY_FUNCTION__);
+    lx_log_debug(__PRETTY_FUNCTION__);
 }
 
 static void
 on_root_mounted (ply_boot_splash_plugin_t* plugin)
 {
-    log_debug(__PRETTY_FUNCTION__);
+    lx_log_debug(__PRETTY_FUNCTION__);
 }
 
 static void
 become_idle (ply_boot_splash_plugin_t* plugin,
              ply_trigger_t* idle_trigger)
 {
-    log_debug(__PRETTY_FUNCTION__);
+    lx_log_debug(__PRETTY_FUNCTION__);
     ply_trigger_pull (idle_trigger, NULL);
 }
 
 static void
 display_normal (ply_boot_splash_plugin_t* plugin)
 {
-    log_debug(__PRETTY_FUNCTION__);
+    lx_log_debug(__PRETTY_FUNCTION__);
 }
 
 static void
@@ -168,7 +170,7 @@ display_password (ply_boot_splash_plugin_t* plugin,
                   const char* prompt,
                   int bullets)
 {
-    log_debug(__PRETTY_FUNCTION__);
+    lx_log_debug(__PRETTY_FUNCTION__);
 }
 
 static void
@@ -176,21 +178,21 @@ display_question (ply_boot_splash_plugin_t* plugin,
                   const char* prompt,
                   const char* entry_text)
 {
-    log_debug(__PRETTY_FUNCTION__);
+    lx_log_debug(__PRETTY_FUNCTION__);
 }
 
 static void
 display_message (ply_boot_splash_plugin_t* plugin,
                  const char* message)
 {
-    log_debug(__PRETTY_FUNCTION__);
+    lx_log_debug(__PRETTY_FUNCTION__);
 }
 
 static void
 hide_message (ply_boot_splash_plugin_t* plugin,
               const char* message)
 {
-    log_debug(__PRETTY_FUNCTION__);
+    lx_log_debug(__PRETTY_FUNCTION__);
 }
 
 /*
@@ -199,7 +201,7 @@ hide_message (ply_boot_splash_plugin_t* plugin,
 ply_boot_splash_plugin_interface_t *
 ply_boot_splash_plugin_get_interface (void)
 {
-    log_debug(__PRETTY_FUNCTION__);
+    lx_log_debug(__PRETTY_FUNCTION__);
     
     static ply_boot_splash_plugin_interface_t plugin_interface =
     {
