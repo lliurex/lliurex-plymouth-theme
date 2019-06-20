@@ -42,9 +42,9 @@ typedef struct {
 */
 struct _ply_boot_splash_plugin 
 {
-    struct image {
+    struct {
         ply_image_t* logo;
-    };
+    } image;
     
     lx_screen_t screen[LX_MAX_SCREENS];
     size_t screens;
@@ -54,10 +54,10 @@ struct _ply_boot_splash_plugin
     bool visible;
     bool running;
     
-    struct color {
+    struct {
         uint32_t background;
         uint32_t foreground;
-    };
+    } color;
 };
 
 /* Plugin callbacks */
@@ -74,7 +74,7 @@ static void on_draw (void* user_data,
     lx_screen_t* screen=NULL;
     
     for (size_t n=0;n<plugin->screens;n++) {
-        if (plugin->screen[n]->display==pixel_display) {
+        if (plugin->screen[n].display==pixel_display) {
             screen=&plugin->screen[n];
             break;
         }
@@ -87,20 +87,27 @@ static void on_draw (void* user_data,
     }
     
     //fill brackground
+    ply_rectangle_t rect;
+    
+    rect.x=x;
+    rect.y=y;
+    rect.width=width;
+    rect.height=height;
+    
     ply_pixel_buffer_fill_with_hex_color(pixel_buffer,
                                          &rect,plugin->color.background);
     
     //logo
-    int lx,ly,lw,lh;
     
-    lw = ply_image_get_width(plugin->image.logo);
-    lh = ply_image_get_height(plugin->image.logo);
     
-    lx = (width/2) - (lw/2);
-    ly = (height/2) - (lh/2);
+    rect.width = ply_image_get_width(plugin->image.logo);
+    rect.height = ply_image_get_height(plugin->image.logo);
+    
+    rect.x = (width/2) - (rect.width/2);
+    rect.y = (height/2) - (rect.height/2);
     
     ply_pixel_buffer_t* lpx = ply_image_get_buffer(plugin->image.logo);
-    ply_pixel_buffer_fill_with_buffer(pixel_buffer,lpx,lx,ly);
+    ply_pixel_buffer_fill_with_buffer(pixel_buffer,lpx,rect.x,rect.y);
     
     //progress bar
     uint32_t* data = ply_pixel_buffer_get_argb32_data(pixel_buffer);
@@ -137,7 +144,7 @@ create_plugin (ply_key_file_t* key_file)
     lx_log_debug("path: %s",path);
     
     char filename[128];
-    sprintf(filename,"%s/logo.png");
+    sprintf(filename,"%s/logo.png",path);
     
     plugin->image.logo=ply_image_new(filename);
     
@@ -194,9 +201,9 @@ add_pixel_display (ply_boot_splash_plugin_t* plugin,
     
     if (plugin->screens<=LX_MAX_SCREENS) {
         for (size_t n=0;n<LX_MAX_SCREENS;n++) {
-            if (plugin->screen[n]->display==NULL) {
-                plugin->screen[n]->display=display;
-                plugin->screen[n]->id=id;
+            if (plugin->screen[n].display==NULL) {
+                plugin->screen[n].display=display;
+                plugin->screen[n].id=id;
                 id++;
                 
                 ply_pixel_display_set_draw_handler (display,
@@ -219,8 +226,8 @@ remove_pixel_display (ply_boot_splash_plugin_t* plugin,
     lx_log_debug(__PRETTY_FUNCTION__);
     
     for (size_t n=0;n<LX_MAX_SCREENS;n++) {
-        if (plugin->screen[n]->display==display) {
-            plugin->screen[n]->display=NULL;
+        if (plugin->screen[n].display==display) {
+            plugin->screen[n].display=NULL;
             plugin->screens--;
         }
     }
