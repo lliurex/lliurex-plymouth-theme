@@ -1,6 +1,3 @@
-cmake_minimum_required(VERSION 3.0)
-
-project(lliurex-plymouth-theme)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(PLY_CORE REQUIRED ply-splash-core)
