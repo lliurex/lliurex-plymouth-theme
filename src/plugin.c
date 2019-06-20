@@ -29,6 +29,9 @@
 #include <stdio.h>
 #include <string.h>
 
+/*
+ * Screen
+ */
 typedef struct {
     uint32_t id;
     ply_pixel_display_t* display;
@@ -39,9 +42,83 @@ typedef struct {
 */
 struct _ply_boot_splash_plugin 
 {
+    struct image {
+        ply_image_t* logo;
+    };
+    
     lx_screen_t screen[LX_MAX_SCREENS];
     size_t screens;
+    
+    double percent;
+    
+    bool visible;
+    bool running;
+    
+    struct color {
+        uint32_t background;
+        uint32_t foreground;
+    };
 };
+
+/* Plugin callbacks */
+
+static void on_draw (void* user_data,
+    ply_pixel_buffer_t* pixel_buffer,
+    int x,
+    int y,
+    int width,
+    int height,
+    ply_pixel_display_t* pixel_display)
+{
+    ply_boot_splash_plugin_t* plugin = (ply_boot_splash_plugin_t*)user_data;
+    lx_screen_t* screen=NULL;
+    
+    for (size_t n=0;n<plugin->screens;n++) {
+        if (plugin->screen[n]->display==pixel_display) {
+            screen=&plugin->screen[n];
+            break;
+        }
+    }
+    
+    // could this happen?
+    if (!screen) {
+        lx_log_error("Invalid display callback");
+        return;
+    }
+    
+    //fill brackground
+    ply_pixel_buffer_fill_with_hex_color(pixel_buffer,
+                                         &rect,plugin->color.background);
+    
+    //logo
+    int lx,ly,lw,lh;
+    
+    lw = ply_image_get_width(plugin->image.logo);
+    lh = ply_image_get_height(plugin->image.logo);
+    
+    lx = (width/2) - (lw/2);
+    ly = (height/2) - (lh/2);
+    
+    ply_pixel_buffer_t* lpx = ply_image_get_buffer(plugin->image.logo);
+    ply_pixel_buffer_fill_with_buffer(pixel_buffer,lpx,lx,ly);
+    
+    //progress bar
+    uint32_t* data = ply_pixel_buffer_get_argb32_data(pixel_buffer);
+    
+    int pw = plugin->percent*width;
+    int ph = (height*0.9);
+    
+    for (int j=0;j<8;j++) {
+        for (int i=0;i<pw;i++) {
+            int px = i;
+            int py = ph - j;
+            
+            data[px+py*width] = plugin->color.foreground;
+        }
+    }
+}
+
+/* Plugin interface functions */
 
 static ply_boot_splash_plugin_t*
 create_plugin (ply_key_file_t* key_file)
@@ -51,6 +128,36 @@ create_plugin (ply_key_file_t* key_file)
     ply_boot_splash_plugin_t* plugin=0;
     
     plugin=calloc(1,sizeof(ply_boot_splash_plugin_t));
+    
+    /* setup resources */
+    
+    char* path;
+    path=ply_key_file_get_value (key_file, "config", "path");
+    
+    lx_log_debug("path: %s",path);
+    
+    char filename[128];
+    sprintf(filename,"%s/logo.png");
+    
+    plugin->image.logo=ply_image_new(filename);
+    
+    /* setup colors */
+    
+    if (ply_key_file_has_key(key_file,"palette","background")) {
+        char* value=ply_key_file_get_value (key_file, "config", "background");
+        plugin->color.background=strtol(value,NULL,16);
+    }
+    else {
+        plugin->color.background=0xeff0f1ff;
+    }
+    
+    if (ply_key_file_has_key(key_file,"palette","foreground")) {
+        char* value=ply_key_file_get_value (key_file, "config", "foreground");
+        plugin->color.foreground=strtol(value,NULL,16);
+    }
+    else {
+        plugin->color.foreground=0xff3daee9;
+    }
     
     return plugin;
 }
@@ -90,6 +197,11 @@ add_pixel_display (ply_boot_splash_plugin_t* plugin,
             if (plugin->screen[n]->display==NULL) {
                 plugin->screen[n]->display=display;
                 plugin->screen[n]->id=id;
+                id++;
+                
+                ply_pixel_display_set_draw_handler (display,
+                                    (ply_pixel_display_draw_handler_t)on_draw,
+                                    plugin);
                 break;
             }
         }
@@ -121,6 +233,14 @@ show_splash_screen (ply_boot_splash_plugin_t* plugin,
                     ply_boot_splash_mode_t mode)
 {
     lx_log_debug(__PRETTY_FUNCTION__);
+    
+    /* load resources */
+    if (!ply_image_load(plugin->image.logo)) {
+        lx_log_error("Failed to load logo image");
+        return false;
+    }
+    
+    return true;
 }
 
 static void
@@ -136,6 +256,7 @@ on_boot_progress (ply_boot_splash_plugin_t* plugin,
                   double duration,
                   double percent_done)
 {
+    plugin->percent=percent_done;
 }
 
 static void

@@ -1,0 +1,12 @@
+[Plymouth Theme]
+Name=LliureX
+Description=LliureX plymouth engine
+ModuleName=liblliurex
+
+[config]
+path=/usr/share/plymouth/themes/lliurex
+fps=60
+
+[palette]
+background=0xeff0f1ff
+foreground=0xff3daee9
