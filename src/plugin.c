@@ -42,6 +42,11 @@ typedef struct {
 */
 struct _ply_boot_splash_plugin 
 {
+    ply_event_loop_t* loop;
+    
+    /* seconds between frames, usually 1/fps */
+    double interval;
+    
     struct {
         ply_image_t* logo;
     } image;
@@ -50,9 +55,6 @@ struct _ply_boot_splash_plugin
     size_t screens;
     
     double percent;
-    
-    bool visible;
-    bool running;
     
     struct {
         uint32_t background;
@@ -95,11 +97,10 @@ static void on_draw (void* user_data,
     rect.height=height;
     
     ply_pixel_buffer_fill_with_hex_color(pixel_buffer,
-                                         &rect,plugin->color.background);
+                                         &rect,
+                                         plugin->color.background);
     
     //logo
-    
-    
     rect.width = ply_image_get_width(plugin->image.logo);
     rect.height = ply_image_get_height(plugin->image.logo);
     
@@ -125,6 +126,37 @@ static void on_draw (void* user_data,
     }
 }
 
+static void
+detach_from_event_loop (ply_boot_splash_plugin_t* plugin)
+{
+    lx_log_debug(__PRETTY_FUNCTION__);
+    plugin->loop=NULL;
+}
+
+static void
+on_timeout (ply_boot_splash_plugin_t* plugin)
+{
+    if (plugin==NULL || plugin->loop==NULL) {
+        return;
+    }
+    
+    //update all screens!
+    for (size_t n=0;n<plugin->screens;n++) {
+        
+        ply_pixel_display_draw_area(plugin->screen[n].display,
+            0,0,
+            ply_pixel_display_get_width(plugin->screen[n].display),
+            ply_pixel_display_get_height(plugin->screen[n].display));
+    }
+    
+    
+    // program another timeout
+    ply_event_loop_watch_for_timeout (plugin->loop,
+                                plugin->interval,
+                                (ply_event_loop_timeout_handler_t) on_timeout,
+                                plugin);
+}
+
 /* Plugin interface functions */
 
 static ply_boot_splash_plugin_t*
@@ -136,8 +168,7 @@ create_plugin (ply_key_file_t* key_file)
     
     plugin=calloc(1,sizeof(ply_boot_splash_plugin_t));
     
-    /* setup resources */
-    
+    //setup resources
     char* path;
     path=ply_key_file_get_value (key_file, "config", "path");
     
@@ -148,10 +179,9 @@ create_plugin (ply_key_file_t* key_file)
     
     plugin->image.logo=ply_image_new(filename);
     
-    /* setup colors */
-    
+    //setup colors
     if (ply_key_file_has_key(key_file,"palette","background")) {
-        char* value=ply_key_file_get_value (key_file, "config", "background");
+        char* value=ply_key_file_get_value (key_file, "palette", "background");
         plugin->color.background=strtol(value,NULL,16);
     }
     else {
@@ -159,11 +189,29 @@ create_plugin (ply_key_file_t* key_file)
     }
     
     if (ply_key_file_has_key(key_file,"palette","foreground")) {
-        char* value=ply_key_file_get_value (key_file, "config", "foreground");
+        char* value=ply_key_file_get_value (key_file, "palette", "foreground");
         plugin->color.foreground=strtol(value,NULL,16);
     }
     else {
         plugin->color.foreground=0xff3daee9;
+    }
+    
+    //setup fps
+    if (ply_key_file_has_key(key_file,"config","fps")) {
+        char* value=ply_key_file_get_value (key_file, "config", "fps");
+        long int fps=strtol(value,NULL,10);
+        
+        if (fps<0 || fps>500) {
+            lx_log_error("FPS out of range:%d",fps);
+            fps=60;
+        }
+        
+        plugin->interval=1.0/fps;
+        lx_log_info("Configured FPS:%d",fps);
+    }
+    else {
+        plugin->interval=1.0/30.0;
+        lx_log_info("Using default FPS: 30");
     }
     
     return plugin;
@@ -241,12 +289,23 @@ show_splash_screen (ply_boot_splash_plugin_t* plugin,
 {
     lx_log_debug(__PRETTY_FUNCTION__);
     
+    plugin->loop=loop;
+    
     /* load resources */
     if (!ply_image_load(plugin->image.logo)) {
         lx_log_error("Failed to load logo image");
         return false;
     }
+    //exit callback
+    ply_event_loop_watch_for_exit (loop, (ply_event_loop_exit_handler_t)
+                                       detach_from_event_loop,
+                                       plugin);
     
+    //setup a timeout
+    ply_event_loop_watch_for_timeout (loop,
+                                          1.0 / 30.0,
+                                          (ply_event_loop_timeout_handler_t)
+                                          on_timeout, plugin);
     return true;
 }
 
