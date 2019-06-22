@@ -10,5 +10,5 @@ target_link_libraries(lliurex ${PLY_CORE_LIBRARIES} ${PLY_GRAPHICS_LIBRARIES} ${
 
 install(
     TARGETS lliurex
-    DESTINATION /lib/x86_64-linux-gnu/plymouth/
+    DESTINATION lib/x86_64-linux-gnu/plymouth/
 )

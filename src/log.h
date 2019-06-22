@@ -20,13 +20,13 @@
 #define LX_PLYMOUTH_LOG
 
 #ifdef NDEBUG
+#define lx_log_debug(format,...) ((void)0)
+#else
 /*
  * Push debug messages to system journal
  * only defined when compiled with debug mode
 */
-void lx_log_debug(char* format,...);
-#else
-#define lx_log_debug(format,...) ((void)0)
+void lx_log_debug(const char* format,...);
 #endif
 
 /*

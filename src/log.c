@@ -20,8 +20,8 @@
 
 #include <systemd/sd-journal.h>
 
-#ifdef NDEBUG
-void lx_log_debug(char* format,...)
+#ifndef NDEBUG
+void lx_log_debug(const char* format,...)
 {
     va_list arg;
     va_start(arg, format);
