@@ -19,6 +19,7 @@
 #define LX_MAX_SCREENS 4
 
 #include "log.h"
+#include "text.h"
 
 #include <ply-boot-splash-plugin.h>
 #include <ply-logger.h>
@@ -60,6 +61,8 @@ struct _ply_boot_splash_plugin
         uint32_t background;
         uint32_t foreground;
     } color;
+    
+    lx_text_t* message;
 };
 
 /* Plugin callbacks */
@@ -123,6 +126,17 @@ static void on_draw (void* user_data,
             
             data[px+py*width] = plugin->color.foreground;
         }
+    }
+    
+    //message
+    if (plugin->message) {
+        rect.width = ply_pixel_buffer_get_width(plugin->message);
+        rect.height = ply_pixel_buffer_get_height(plugin->message);
+        
+        rect.x = (width/2) - (rect.width/2);
+        rect.y = height-(height/3);
+        
+        ply_pixel_buffer_fill_with_buffer(pixel_buffer,plugin->message,rect.x,rect.y);
     }
 }
 
@@ -373,6 +387,8 @@ display_message (ply_boot_splash_plugin_t* plugin,
                  const char* message)
 {
     lx_log_debug(__PRETTY_FUNCTION__);
+    
+    plugin->message=lx_text_new(message,0);
 }
 
 static void
@@ -380,6 +396,9 @@ hide_message (ply_boot_splash_plugin_t* plugin,
               const char* message)
 {
     lx_log_debug(__PRETTY_FUNCTION__);
+    
+    lx_text_delete(plugin->message);
+    plugin->message=NULL;
 }
 
 /*
