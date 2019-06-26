@@ -60,10 +60,24 @@ struct _ply_boot_splash_plugin
     struct {
         uint32_t background;
         uint32_t foreground;
+        uint32_t text;
     } color;
     
     lx_text_t* message;
+    lx_text_t* status;
 };
+
+/*
+* converts rgba to argb used by plymouth buffers
+*/
+static uint32_t rgba_to_argb(uint32_t color)
+{
+    uint32_t tmp=color>>8;
+    
+    tmp = tmp | ((color<<24) & 0xff000000);
+    
+    return tmp;
+}
 
 /* Plugin callbacks */
 
@@ -130,13 +144,24 @@ static void on_draw (void* user_data,
     
     //message
     if (plugin->message) {
-        rect.width = ply_pixel_buffer_get_width(plugin->message);
-        rect.height = ply_pixel_buffer_get_height(plugin->message);
+        rect.width = ply_pixel_buffer_get_width(plugin->message->buffer);
+        rect.height = ply_pixel_buffer_get_height(plugin->message->buffer);
         
         rect.x = (width/2) - (rect.width/2);
-        rect.y = height-(height/3);
+        rect.y = height*0.75;
         
-        ply_pixel_buffer_fill_with_buffer(pixel_buffer,plugin->message,rect.x,rect.y);
+        ply_pixel_buffer_fill_with_buffer(pixel_buffer,plugin->message->buffer,rect.x,rect.y);
+    }
+    
+    //status
+    if (plugin->status) {
+        rect.width = ply_pixel_buffer_get_width(plugin->status->buffer);
+        rect.height = ply_pixel_buffer_get_height(plugin->status->buffer);
+        
+        rect.x = (width/2) - (rect.width/2);
+        rect.y = height*0.9;
+        
+        ply_pixel_buffer_fill_with_buffer(pixel_buffer,plugin->status->buffer,rect.x,rect.y);
     }
 }
 
@@ -194,20 +219,28 @@ create_plugin (ply_key_file_t* key_file)
     plugin->image.logo=ply_image_new(filename);
     
     //setup colors
-    if (ply_key_file_has_key(key_file,"palette","background")) {
-        char* value=ply_key_file_get_value (key_file, "palette", "background");
+    if (ply_key_file_has_key(key_file,"color","background")) {
+        char* value=ply_key_file_get_value (key_file, "color", "background");
         plugin->color.background=strtol(value,NULL,16);
     }
     else {
         plugin->color.background=0xeff0f1ff;
     }
     
-    if (ply_key_file_has_key(key_file,"palette","foreground")) {
-        char* value=ply_key_file_get_value (key_file, "palette", "foreground");
-        plugin->color.foreground=strtol(value,NULL,16);
+    if (ply_key_file_has_key(key_file,"color","foreground")) {
+        char* value=ply_key_file_get_value (key_file, "color", "foreground");
+        plugin->color.foreground=rgba_to_argb(strtol(value,NULL,16));
     }
     else {
         plugin->color.foreground=0xff3daee9;
+    }
+    
+    if (ply_key_file_has_key(key_file,"color","text")) {
+        char* value=ply_key_file_get_value (key_file, "color", "text");
+        plugin->color.text=rgba_to_argb(strtol(value,NULL,16));
+    }
+    else {
+        plugin->color.text=0xff808080;
     }
     
     //setup fps
@@ -221,12 +254,13 @@ create_plugin (ply_key_file_t* key_file)
         }
         
         plugin->interval=1.0/fps;
-        lx_log_info("Configured FPS:%d",fps);
+        lx_log_info("FPS:%d",fps);
     }
     else {
         plugin->interval=1.0/30.0;
         lx_log_info("Using default FPS: 30");
     }
+    
     
     return plugin;
 }
@@ -329,6 +363,13 @@ update_status (ply_boot_splash_plugin_t* plugin,
 {
     lx_log_debug(__PRETTY_FUNCTION__);
     lx_log_info(status);
+    
+    if (plugin->status) {
+        lx_text_delete(plugin->status);
+        plugin->status=NULL;
+    }
+    
+    plugin->status=lx_text_new(status,plugin->color.text);
 }
 
 static void
@@ -350,6 +391,7 @@ static void
 on_root_mounted (ply_boot_splash_plugin_t* plugin)
 {
     lx_log_debug(__PRETTY_FUNCTION__);
+    lx_log_info("root mounted event");
 }
 
 static void
@@ -388,7 +430,13 @@ display_message (ply_boot_splash_plugin_t* plugin,
 {
     lx_log_debug(__PRETTY_FUNCTION__);
     
-    plugin->message=lx_text_new(message,0);
+    if (plugin->message) {
+        lx_text_delete(plugin->message);
+        plugin->message=NULL;
+    }
+    
+    plugin->message=lx_text_new(message,plugin->color.text);
+    lx_log_debug("message:%s",message);
 }
 
 static void

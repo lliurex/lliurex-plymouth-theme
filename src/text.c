@@ -17,8 +17,10 @@
 */
 
 #include "text.h"
+#include "font8x8_basic.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 lx_text_t* lx_text_new(const char* str,uint32_t color)
 {
@@ -26,6 +28,39 @@ lx_text_t* lx_text_new(const char* str,uint32_t color)
     
     text=calloc(1,sizeof(lx_text_t));
     text->str=strdup(str);
+    
+    int width=strlen(str)*16;
+    int height=16;
+    
+    text->buffer=ply_pixel_buffer_new(width,height);
+    uint32_t* data = ply_pixel_buffer_get_argb32_data(text->buffer);
+    
+    int x=0;
+    
+    for (int n=0;n<strlen(str);n++) {
+        char c=str[n];
+        if (c>127) {
+            c=0;
+        }
+        
+        char* glyph = font8x8_basic[c];
+        
+        for (int j=0;j<16;j++) {
+            char row=glyph[j/2];
+            
+            for (int i=0;i<16;i++) {
+                char value = (row>>(i/2)) & 1;
+                if (value==1) {
+                    data[(x+i)+j*width]=color;
+                }
+                else {
+                    data[(x+i)+j*width]=0x00000000;
+                }
+            }
+        }
+        
+        x+=16;
+    }
     
     return text;
 }

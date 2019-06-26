@@ -7,6 +7,7 @@ ModuleName=liblliurex
 path=/usr/share/plymouth/themes/lliurex
 fps=60
 
-[palette]
+[color]
 background=0xeff0f1ff
-foreground=0xff3daee9
+foreground=0x3daee9ff
+text=0x31363bff
