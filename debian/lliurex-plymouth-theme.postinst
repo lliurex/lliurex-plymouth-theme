@@ -1,0 +1,29 @@
+#!/bin/bash
+
+set -e
+
+case "$1" in
+    configure)
+
+    update-alternatives \
+        --install /usr/share/plymouth/themes/default.plymouth default.plymouth \
+        /usr/share/plymouth/themes/lliurex/lliurex.plymouth 600
+
+    if which update-initramfs >/dev/null 2>&1
+    then
+        update-initramfs -u -k all
+    fi
+    ;;
+
+    abort-upgrade|abort-deconfigure|abort-remove)
+    ;;
+
+    *)
+    echo "$0 called with unknown argument \`$1'" 1>&2
+    exit 1
+    ;;
+esac
+
+
+exit 0
+

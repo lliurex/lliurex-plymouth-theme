@@ -1,0 +1,12 @@
+Source: lliurex-plymouth-theme
+Section: x11
+Priority: optional
+Maintainer: LliureX Team <lliurex@gva.es>
+Build-Depends: debhelper (>= 10), librsvg2-bin
+Standards-Version: 4.1.2
+
+Package: lliurex-plymouth-theme
+Architecture: all
+Section: x11
+Description: LliureX 19 plymouth theme
+ LliureX 19 custom plymouth plugin and theme
