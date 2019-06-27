@@ -1,7 +1,8 @@
-lliurex-plymouth-theme (0.9.0.1) bionic; urgency=medium
+lliurex-plymouth-theme (0.9.0.2) bionic; urgency=medium
 
   [ Enrique Medina Gremaldos ]
   * Master tag: 505dd477ccefdd7026f5f8d72cd0dda837188a32
   * Added missing deps and build deps
+  * Added cmake and build-essentials build deps
 
- -- Enrique Medina Gremaldos <quiqueiii@gmail.com>  Thu, 27 Jun 2019 09:01:53 +0200
+ -- Enrique Medina Gremaldos <quiqueiii@gmail.com>  Thu, 27 Jun 2019 11:01:53 +0200
