@@ -47,10 +47,10 @@ static void update_glyph(int u)
     cache.glyph[u].right=0;
     
     for (int j=0;j<LX_TEXT_H;j++) {
-        char row=bitmap[j/2];
+        char row=bitmap[j>>1];
         
         for (int i=0;i<LX_TEXT_W;i++) {
-            char value = (row>>(i/2)) & 1;
+            char value = (row>>(i>>1)) & 1;
             uint8_t pixel;
             
             if (value==1) {

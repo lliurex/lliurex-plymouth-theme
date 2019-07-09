@@ -131,7 +131,7 @@ static void on_draw (void* user_data,
     uint32_t* data = ply_pixel_buffer_get_argb32_data(pixel_buffer);
     
     int pw = plugin->percent*width;
-    int ph = (height*0.9);
+    int ph = height-48;
     
     for (int j=0;j<8;j++) {
         for (int i=0;i<pw;i++) {
@@ -159,7 +159,7 @@ static void on_draw (void* user_data,
         rect.height = ply_pixel_buffer_get_height(plugin->status->buffer);
         
         rect.x = (width/2) - (rect.width/2);
-        rect.y = height*0.9;
+        rect.y = (height*0.75)+48;
         
         ply_pixel_buffer_fill_with_buffer(pixel_buffer,plugin->status->buffer,rect.x,rect.y);
     }
@@ -359,18 +359,47 @@ show_splash_screen (ply_boot_splash_plugin_t* plugin,
 }
 
 static void
+system_update (ply_boot_splash_plugin_t *plugin,
+              int progress)
+{
+    lx_log_debug(__PRETTY_FUNCTION__);
+    lx_log_debug("updating: %d",progress);
+}
+
+static void
 update_status (ply_boot_splash_plugin_t* plugin,
                const char* status)
 {
     lx_log_debug(__PRETTY_FUNCTION__);
-    lx_log_info(status);
+    lx_log_debug(status);
     
     if (plugin->status) {
         lx_text_delete(plugin->status);
         plugin->status=NULL;
     }
     
-    plugin->status=lx_text_new(status,plugin->color.text);
+    char* cpy=strdup(status);
+    char* processed=cpy;
+    
+    for (int n=0;n<strlen(cpy)-1;n++) {
+        if (cpy[n]==':') {
+            processed=&cpy[n+1];
+        }
+    }
+    
+    //ignore default messages
+    if (processed!=cpy) {
+        plugin->status=lx_text_new(processed,plugin->color.text);
+    }
+    
+    free(cpy);
+}
+
+static void
+on_boot_output (ply_boot_splash_plugin_t *plugin,
+               const char* output,
+               size_t size)
+{
 }
 
 static void
@@ -436,8 +465,21 @@ display_message (ply_boot_splash_plugin_t* plugin,
         plugin->message=NULL;
     }
     
-    plugin->message=lx_text_new(message,plugin->color.text);
+    char* cpy=strdup(message);
+    char* processed=cpy;
+    
+    for (int n=0;n<strlen(cpy)-1;n++) {
+        if (cpy[n]==':') {
+            processed=&cpy[n+1];
+            break;
+        }
+    }
+    
+    plugin->message=lx_text_new(processed,plugin->color.text);
+    
     lx_log_debug("message:%s",message);
+    
+    free(cpy);
 }
 
 static void
@@ -467,7 +509,9 @@ ply_boot_splash_plugin_get_interface (void)
             .add_pixel_display    = add_pixel_display,
             .remove_pixel_display = remove_pixel_display,
             .show_splash_screen   = show_splash_screen,
+            .system_update        = system_update,
             .update_status        = update_status,
+            .on_boot_output       = on_boot_output,
             .on_boot_progress     = on_boot_progress,
             .hide_splash_screen   = hide_splash_screen,
             .on_root_mounted      = on_root_mounted,
