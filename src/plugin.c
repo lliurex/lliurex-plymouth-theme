@@ -270,6 +270,7 @@ destroy_plugin (ply_boot_splash_plugin_t* plugin)
 {
     lx_log_debug(__PRETTY_FUNCTION__);
     
+    lx_text_free_cache();
     free(plugin);
 }
 
