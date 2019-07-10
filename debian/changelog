@@ -1,3 +1,10 @@
+lliurex-plymouth-theme (0.9.1.0) bionic; urgency=medium
+
+  * Master tag: 75457ad13cb03d111d5ca04b0ee38674a2d57ab1
+  * Polished message display
+
+ -- Enrique Medina Gremaldos <quiqueiii@gmail.com>  Wed, 10 Jul 2019 12:25:46 +0200
+
 lliurex-plymouth-theme (0.9.0.3) bionic; urgency=medium
 
   [ Enrique Medina Gremaldos ]
