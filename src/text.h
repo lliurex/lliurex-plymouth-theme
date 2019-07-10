@@ -32,4 +32,6 @@ lx_text_t* lx_text_new(const char* str,uint32_t color);
 
 void lx_text_delete(lx_text_t* text);
 
+void lx_text_free_cache();
+
 #endif

@@ -18,9 +18,87 @@
 
 #include "text.h"
 #include "font8x8_basic.h"
+#include "log.h"
 
 #include <stdlib.h>
 #include <string.h>
+
+#define LX_TEXT_WS 8
+#define LX_TEXT_W 16
+#define LX_TEXT_H 16
+#define LX_TEXT_INTER 1
+
+typedef struct {
+    uint8_t* data;
+    int left;
+    int right;
+    int width;
+} lx_glyph_t;
+
+struct {
+    lx_glyph_t glyph[128];
+} cache;
+
+static void update_glyph(int u)
+{
+    char* bitmap = font8x8_basic[u];
+    
+    cache.glyph[u].left=LX_TEXT_W;
+    cache.glyph[u].right=0;
+    
+    for (int j=0;j<LX_TEXT_H;j++) {
+        char row=bitmap[j>>1];
+        
+        for (int i=0;i<LX_TEXT_W;i++) {
+            char value = (row>>(i>>1)) & 1;
+            uint8_t pixel;
+            
+            if (value==1) {
+                pixel=0xff;
+                
+                if (cache.glyph[u].left>i) {
+                    cache.glyph[u].left=i;
+                }
+                
+                if (cache.glyph[u].right<i) {
+                    cache.glyph[u].right=i;
+                }
+            }
+            else {
+                pixel=0x00;
+            }
+            
+            cache.glyph[u].data[i+j*LX_TEXT_W]=pixel;
+        }
+    }
+    
+    if (cache.glyph[u].left==LX_TEXT_W) {
+        cache.glyph[u].left=0;
+        cache.glyph[u].width=LX_TEXT_W;
+    }
+    else {
+        cache.glyph[u].width=1+(cache.glyph[u].right-cache.glyph[u].left);
+    }
+    
+}
+
+static int update_cache(const char* str)
+{
+    int rwidth=0;
+    for (int n=0;n<strlen(str);n++) {
+        int u=str[n];
+        
+        if (cache.glyph[u].data==NULL) {
+            cache.glyph[u].data=malloc(LX_TEXT_W*LX_TEXT_H);
+            update_glyph(u);
+        }
+        
+        rwidth+=cache.glyph[u].width;
+        
+    }
+    
+    return rwidth;
+}
 
 lx_text_t* lx_text_new(const char* str,uint32_t color)
 {
@@ -29,8 +107,12 @@ lx_text_t* lx_text_new(const char* str,uint32_t color)
     text=calloc(1,sizeof(lx_text_t));
     text->str=strdup(str);
     
-    int width=strlen(str)*16;
-    int height=16;
+    int width = update_cache(str);
+    width=width+((strlen(str)+1)*LX_TEXT_INTER);
+    
+    int height=LX_TEXT_H;
+    
+    color = color & 0x00ffffff;
     
     text->buffer=ply_pixel_buffer_new(width,height);
     uint32_t* data = ply_pixel_buffer_get_argb32_data(text->buffer);
@@ -38,28 +120,31 @@ lx_text_t* lx_text_new(const char* str,uint32_t color)
     int x=0;
     
     for (int n=0;n<strlen(str);n++) {
-        char c=str[n];
-        if (c>127) {
-            c=0;
+        int u=str[n];
+        
+        if (u>127) {
+            u=0;
         }
         
-        char* glyph = font8x8_basic[c];
+        if (u==' ') {
+            x+=LX_TEXT_WS;
+            continue;
+        }
         
-        for (int j=0;j<16;j++) {
-            char row=glyph[j/2];
-            
-            for (int i=0;i<16;i++) {
-                char value = (row>>(i/2)) & 1;
-                if (value==1) {
-                    data[(x+i)+j*width]=color;
-                }
-                else {
-                    data[(x+i)+j*width]=0x00000000;
-                }
+        int rwidth = cache.glyph[u].width;
+        
+        x++;
+        int start = cache.glyph[u].left;
+        int end = cache.glyph[u].right;
+        
+        for (int j=0;j<LX_TEXT_H;j++) {
+            for (int i=start,ii=0;i<=end;i++,ii++) {
+                uint32_t alpha = cache.glyph[u].data[i+j*LX_TEXT_W] << 24;
+                data[(x+ii)+j*width]=(color | alpha);
             }
         }
+        x+=rwidth;
         
-        x+=16;
     }
     
     return text;
@@ -71,5 +156,14 @@ void lx_text_delete(lx_text_t* text)
         free(text->str);
         ply_pixel_buffer_free(text->buffer);
         free(text);
+    }
+}
+
+void lx_text_free_cache()
+{
+    for (int n=0;n<128;n++) {
+        if (cache.glyph[n].data!=NULL) {
+            free(cache.glyph[n].data);
+        }
     }
 }
