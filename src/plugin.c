@@ -465,21 +465,9 @@ display_message (ply_boot_splash_plugin_t* plugin,
         plugin->message=NULL;
     }
     
-    char* cpy=strdup(message);
-    char* processed=cpy;
-    
-    for (int n=0;n<strlen(cpy)-1;n++) {
-        if (cpy[n]==':') {
-            processed=&cpy[n+1];
-            break;
-        }
-    }
-    
-    plugin->message=lx_text_new(processed,plugin->color.text);
+    plugin->message=lx_text_new(message,plugin->color.text);
     
     lx_log_debug("message:%s",message);
-    
-    free(cpy);
 }
 
 static void
