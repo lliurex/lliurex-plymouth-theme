@@ -1,3 +1,10 @@
+lliurex-plymouth-theme (0.9.2.0) bionic; urgency=medium
+
+  * Master tag: 6facc099a01ffc6703c99c5235d9036f2822d09a
+  * No longer filtering messages, but status messages
+
+ -- Enrique Medina Gremaldos <quiqueiii@gmail.com>  Tue, 16 Jul 2019 09:27:13 +0200
+
 lliurex-plymouth-theme (0.9.1.0) bionic; urgency=medium
 
   * Master tag: 75457ad13cb03d111d5ca04b0ee38674a2d57ab1
