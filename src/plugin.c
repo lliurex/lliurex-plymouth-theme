@@ -17,6 +17,12 @@
 */
 
 #define LX_MAX_SCREENS 4
+#define LX_MAX_PALETTE  32
+
+#define LX_COLOR_BACKGROUND 0
+#define LX_COLOR_TEXT 1
+#define LX_COLOR_FOREGROUND_1 2
+#define LX_COLOR_FOREGROUND_2 3
 
 #include "log.h"
 #include "text.h"
@@ -57,11 +63,7 @@ struct _ply_boot_splash_plugin
     
     double percent;
     
-    struct {
-        uint32_t background;
-        uint32_t foreground;
-        uint32_t text;
-    } color;
+    uint32_t palette[LX_MAX_PALETTE];
     
     lx_text_t* message;
     lx_text_t* status;
@@ -115,7 +117,7 @@ static void on_draw (void* user_data,
     
     ply_pixel_buffer_fill_with_hex_color(pixel_buffer,
                                          &rect,
-                                         plugin->color.background);
+                                         plugin->palette[LX_COLOR_BACKGROUND]);
     
     //logo
     rect.width = ply_image_get_width(plugin->image.logo);
@@ -138,7 +140,7 @@ static void on_draw (void* user_data,
             int px = i;
             int py = ph - j;
             
-            data[px+py*width] = plugin->color.foreground;
+            data[px+py*width] = plugin->palette[LX_COLOR_FOREGROUND_1];
         }
     }
     
@@ -218,29 +220,26 @@ create_plugin (ply_key_file_t* key_file)
     
     plugin->image.logo=ply_image_new(filename);
     
-    //setup colors
-    if (ply_key_file_has_key(key_file,"color","background")) {
-        char* value=ply_key_file_get_value (key_file, "color", "background");
-        plugin->color.background=strtol(value,NULL,16);
-    }
-    else {
-        plugin->color.background=0xeff0f1ff;
-    }
+    //default palette values
+    plugin->palette[0]=0xeff0f1ff; //background
+    plugin->palette[1]=0xff808080; //text
+    plugin->palette[2]=0xff3daee9; //foreground 1
+    plugin->palette[3]=0xffda4453; //foreground 2
     
-    if (ply_key_file_has_key(key_file,"color","foreground")) {
-        char* value=ply_key_file_get_value (key_file, "color", "foreground");
-        plugin->color.foreground=rgba_to_argb(strtol(value,NULL,16));
-    }
-    else {
-        plugin->color.foreground=0xff3daee9;
-    }
-    
-    if (ply_key_file_has_key(key_file,"color","text")) {
-        char* value=ply_key_file_get_value (key_file, "color", "text");
-        plugin->color.text=rgba_to_argb(strtol(value,NULL,16));
-    }
-    else {
-        plugin->color.text=0xff808080;
+    //load palette
+    for (int n=0;n<LX_MAX_PALETTE;n++) {
+        char id[4];
+        sprintf(id,"p%02d",n);
+        
+        if (ply_key_file_has_key(key_file,"palette",id)) {
+            char* value=ply_key_file_get_value (key_file, "palette",id);
+            if (n>0) {
+                plugin->palette[n]=rgba_to_argb(strtol(value,NULL,16));
+            }
+            else {
+                plugin->palette[n]=strtol(value,NULL,16);
+            }
+        }
     }
     
     //setup fps
@@ -260,7 +259,6 @@ create_plugin (ply_key_file_t* key_file)
         plugin->interval=1.0/30.0;
         lx_log_info("Using default FPS: 30");
     }
-    
     
     return plugin;
 }
@@ -389,7 +387,7 @@ update_status (ply_boot_splash_plugin_t* plugin,
     
     //ignore default messages
     if (processed!=cpy) {
-        plugin->status=lx_text_new(processed,plugin->color.text);
+        plugin->status=lx_text_new(processed,plugin->palette[LX_COLOR_TEXT]);
     }
     
     free(cpy);
@@ -465,7 +463,7 @@ display_message (ply_boot_splash_plugin_t* plugin,
         plugin->message=NULL;
     }
     
-    plugin->message=lx_text_new(message,plugin->color.text);
+    plugin->message=lx_text_new(message,plugin->palette[LX_COLOR_TEXT]);
     
     lx_log_debug("message:%s",message);
 }

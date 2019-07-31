@@ -11,3 +11,16 @@ fps=60
 background=0xeff0f1ff
 foreground=0x3daee9ff
 text=0x31363bff
+
+[palette]
+#background
+p00=0xeff0f1ff
+
+#text
+p01=0x31363bff
+
+#foreground 1
+p02=0x3daee9ff
+
+#foreground 2
+p03=0xda4453ff
