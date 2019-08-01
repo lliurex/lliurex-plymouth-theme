@@ -23,9 +23,11 @@
 #define LX_COLOR_TEXT 1
 #define LX_COLOR_FOREGROUND_1 2
 #define LX_COLOR_FOREGROUND_2 3
+#define LX_COLOR_FOREGROUND_3 4
 
 #include "log.h"
 #include "text.h"
+#include "cmdline.h"
 
 #include <ply-boot-splash-plugin.h>
 #include <ply-logger.h>
@@ -50,6 +52,7 @@ typedef struct {
 struct _ply_boot_splash_plugin 
 {
     ply_event_loop_t* loop;
+    ply_boot_splash_mode_t mode;
     
     /* seconds between frames, usually 1/fps */
     double interval;
@@ -107,6 +110,22 @@ static void on_draw (void* user_data,
         return;
     }
     
+    uint32_t progress_bar_color=0;
+    
+    switch (plugin->mode) {
+        case PLY_BOOT_SPLASH_MODE_BOOT_UP:
+            progress_bar_color=plugin->palette[LX_COLOR_FOREGROUND_1];
+        break;
+        
+        case PLY_BOOT_SPLASH_MODE_SHUTDOWN:
+            progress_bar_color=plugin->palette[LX_COLOR_FOREGROUND_2];
+        break;
+        
+        case PLY_BOOT_SPLASH_MODE_UPDATES:
+            progress_bar_color=plugin->palette[LX_COLOR_FOREGROUND_3];
+        break;
+    }
+    
     //fill brackground
     ply_rectangle_t rect;
     
@@ -140,7 +159,7 @@ static void on_draw (void* user_data,
             int px = i;
             int py = ph - j;
             
-            data[px+py*width] = plugin->palette[LX_COLOR_FOREGROUND_1];
+            data[px+py*width] = progress_bar_color;
         }
     }
     
@@ -260,6 +279,16 @@ create_plugin (ply_key_file_t* key_file)
         lx_log_info("Using default FPS: 30");
     }
     
+    size_t num_options;
+    char** options = lx_cmdline_get(&num_options);
+    
+    for (size_t n=0;n<num_options;n++) {
+        lx_log_debug("cmdline option %s",options[n]);
+        free(options[n]);
+    }
+    
+    free(options);
+    
     return plugin;
 }
 
@@ -337,6 +366,7 @@ show_splash_screen (ply_boot_splash_plugin_t* plugin,
     lx_log_debug(__PRETTY_FUNCTION__);
     
     plugin->loop=loop;
+    plugin->mode=mode;
     
     /* load resources */
     if (!ply_image_load(plugin->image.logo)) {

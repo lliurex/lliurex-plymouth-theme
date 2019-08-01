@@ -24,3 +24,6 @@ p02=0x3daee9ff
 
 #foreground 2
 p03=0xda4453ff
+
+#foreground 3
+p04=0xfdbc4bff
