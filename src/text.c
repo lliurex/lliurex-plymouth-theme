@@ -22,128 +22,198 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #define LX_TEXT_WS 8
-#define LX_TEXT_W 16
+#define LX_TEXT_W 18
 #define LX_TEXT_H 16
 #define LX_TEXT_INTER 1
 
-typedef struct {
-    uint8_t* data;
-    int left;
-    int right;
-    int width;
-} lx_glyph_t;
+FT_Library library;
+int ft_counter=0;
 
-struct {
-    lx_glyph_t glyph[128];
-} cache;
-
-static void update_glyph(int u)
+lx_font_t* lx_font_new(const char* path,int px,uint32_t color)
 {
-    char* bitmap = font8x8_basic[u];
+    lx_font_t* font;
+    FT_Error error;
     
-    cache.glyph[u].left=LX_TEXT_W;
-    cache.glyph[u].right=0;
+    if (ft_counter==0) {
+        //ToDo: check error
+        error=FT_Init_FreeType(&library);
+        lx_log_debug("Loading Freetype:%d",error);
+    }
     
-    for (int j=0;j<LX_TEXT_H;j++) {
-        char row=bitmap[j>>1];
+    ft_counter++;
+    
+    font = calloc(1,sizeof(lx_font_t));
+    font->path=strdup(path);
+    font->px=px;
+    font->space=px/2;
+    font->color=color & 0x00ffffff; //clear alpha
+    
+    for (int n=0;n<128;n++) {
+        memset(&font->glyph[n],0,sizeof(lx_glyph_t));
+    }
+    
+    error=FT_New_Face(library,path,0,&font->face);
+    lx_log_debug("Loading face: %d",error);
+    
+    error=FT_Set_Pixel_Sizes(font->face,0,px);
+    lx_log_debug("Set size: %d",error);
+
+    for (int n=32;n<128;n++) {
+        lx_log_debug("loading %d",n);
+        //error=FT_Load_Char(font->face,n,FT_LOAD_RENDER);
+        FT_UInt index;
         
-        for (int i=0;i<LX_TEXT_W;i++) {
-            char value = (row>>(i>>1)) & 1;
-            uint8_t pixel;
-            
-            if (value==1) {
-                pixel=0xff;
-                
-                if (cache.glyph[u].left>i) {
-                    cache.glyph[u].left=i;
-                }
-                
-                if (cache.glyph[u].right<i) {
-                    cache.glyph[u].right=i;
-                }
+        index=FT_Get_Char_Index(font->face,n);
+        lx_log_debug("loaded:%d",index);
+        
+        if (index==0) {
+            lx_log_error("Ignoring char %d",n);
+            continue;
+        }
+        
+        error = FT_Load_Glyph(font->face,index,0);
+        
+        if (error!=0) {
+            lx_log_debug("Failed to load glyph");
+        }
+        
+        FT_GlyphSlot glyph = font->face->glyph;
+        
+        error = FT_Render_Glyph(glyph,FT_RENDER_MODE_NORMAL);
+        
+        if (error!=0) {
+            lx_log_debug("Failed to render 0");
+            continue;
+        }
+        
+        if (!glyph->bitmap.buffer) {
+            lx_log_debug("Failed to render 1");
+            continue;
+        }
+        
+        font->glyph[n].code=n;
+        font->glyph[n].width=glyph->bitmap.width;
+        font->glyph[n].height=glyph->bitmap.rows;
+        font->glyph[n].left=glyph->bitmap_left;
+        font->glyph[n].top=glyph->bitmap_top;
+        
+        lx_log_debug("char %d w:%d h:%d l:%d t:%d",font->glyph[n].code,
+            font->glyph[n].width,
+            font->glyph[n].height,
+            font->glyph[n].left,
+            font->glyph[n].top
+        );
+        
+        font->glyph[n].buffer=ply_pixel_buffer_new(font->glyph[n].width,font->glyph[n].height);
+        uint32_t* data = ply_pixel_buffer_get_argb32_data(font->glyph[n].buffer);
+        
+        uint32_t width =font->glyph[n].width;
+        uint32_t height =font->glyph[n].height;
+        
+        for (int j=0;j<height;j++) {
+            for (int i=0;i<width;i++) {
+                data[i+j*width] = font->color | (glyph->bitmap.buffer[i+j*width]<<24);
             }
-            else {
-                pixel=0x00;
-            }
-            
-            cache.glyph[u].data[i+j*LX_TEXT_W]=pixel;
+        }
+        
+    }
+
+    return font;
+}
+
+void lx_font_delete(lx_font_t* font)
+{
+    for (int n=32;n<128;n++) {
+        if (font->glyph[n].buffer) {
+            ply_pixel_buffer_free(font->glyph[n].buffer);
         }
     }
     
-    if (cache.glyph[u].left==LX_TEXT_W) {
-        cache.glyph[u].left=0;
-        cache.glyph[u].width=LX_TEXT_W;
-    }
-    else {
-        cache.glyph[u].width=1+(cache.glyph[u].right-cache.glyph[u].left);
-    }
+    free(font->path);
+    free(font);
     
+    ft_counter--;
+    
+    if (ft_counter==0) {
+        FT_Done_FreeType(library);
+    }
 }
 
-static int update_cache(const char* str)
-{
-    int rwidth=0;
-    for (int n=0;n<strlen(str);n++) {
-        int u=str[n];
-        
-        if (cache.glyph[u].data==NULL) {
-            cache.glyph[u].data=malloc(LX_TEXT_W*LX_TEXT_H);
-            update_glyph(u);
-        }
-        
-        rwidth+=cache.glyph[u].width;
-        
-    }
-    
-    return rwidth;
-}
-
-lx_text_t* lx_text_new(const char* str,uint32_t color)
+lx_text_t* lx_text_new(lx_font_t* font,const char* str)
 {
     lx_text_t* text=0;
     
     text=calloc(1,sizeof(lx_text_t));
     text->str=strdup(str);
+    text->font=font;
     
-    int width = update_cache(str);
+    int width=0;
+    int height=0;
+    int top=-100;
+    int bottom=100;
+    
+    lx_log_debug("text:%s,%d",str,strlen(str));
+    
+    for (int n=0;n<strlen(str);n++) {
+        uint32_t code = 0x7f & str[n];
+        
+        lx_glyph_t* glyph = &font->glyph[code];
+        
+        if (code==0x20) {
+            width+=font->space;
+            continue;
+        }
+        
+        if (glyph->code==0) {
+            lx_log_debug("char not found:%d",code);
+            continue;
+        }
+        
+        width+=glyph->width;
+        
+        if (glyph->top>top) {
+            top = glyph->top;
+        }
+        
+        if ((glyph->top-glyph->height)<bottom) {
+            bottom=glyph->top-glyph->height;
+        }
+    }
+    
+    int p=bottom-top;
+    p=p*p;
+    height = sqrtf(p);
+    
     width=width+((strlen(str)+1)*LX_TEXT_INTER);
-    
-    int height=LX_TEXT_H;
-    
-    color = color & 0x00ffffff;
+    lx_log_debug("text size in pixels %dx%d",width,height);
     
     text->buffer=ply_pixel_buffer_new(width,height);
     uint32_t* data = ply_pixel_buffer_get_argb32_data(text->buffer);
     
-    int x=0;
+    int x=LX_TEXT_INTER;
+    int y=0;
+    int baseline = height+bottom;
+    
+    lx_log_debug("top bottom baseline %d %d %d",top,bottom,baseline);
     
     for (int n=0;n<strlen(str);n++) {
-        int u=str[n];
+        uint32_t code = 0x7f & str[n];
         
-        if (u>127) {
-            u=0;
-        }
+        lx_glyph_t* glyph = &font->glyph[code];
         
-        if (u==' ') {
-            x+=LX_TEXT_WS;
+        if (code==0x20 || glyph->code==0) {
+            x+=font->space;
             continue;
         }
         
-        int rwidth = cache.glyph[u].width;
+        int dif=glyph->height-glyph->top;
+        ply_pixel_buffer_fill_with_buffer(text->buffer,glyph->buffer,x,baseline-glyph->top);
+        x+=glyph->width+LX_TEXT_INTER;
         
-        x++;
-        int start = cache.glyph[u].left;
-        int end = cache.glyph[u].right;
-        
-        for (int j=0;j<LX_TEXT_H;j++) {
-            for (int i=start,ii=0;i<=end;i++,ii++) {
-                uint32_t alpha = cache.glyph[u].data[i+j*LX_TEXT_W] << 24;
-                data[(x+ii)+j*width]=(color | alpha);
-            }
-        }
-        x+=rwidth;
+        //x+=rwidth;
         
     }
     
@@ -156,14 +226,5 @@ void lx_text_delete(lx_text_t* text)
         free(text->str);
         ply_pixel_buffer_free(text->buffer);
         free(text);
-    }
-}
-
-void lx_text_free_cache()
-{
-    for (int n=0;n<128;n++) {
-        if (cache.glyph[n].data!=NULL) {
-            free(cache.glyph[n].data);
-        }
     }
 }

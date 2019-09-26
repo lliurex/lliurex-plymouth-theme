@@ -20,18 +20,64 @@
 #define LX_PLYMOUTH_TEXT
 
 #include <ply-pixel-buffer.h>
-
+#include <ft2build.h>
+#include FT_FREETYPE_H
 #include <stdint.h>
 
 typedef struct {
+    
+    uint32_t code;
+    int32_t top;
+    int32_t left;
+    int32_t width;
+    int32_t height;
+    ply_pixel_buffer_t* buffer;
+    
+} lx_glyph_t;
+
+typedef struct {
+    FT_Face face;
+    char* path;
+    int32_t px;
+    uint32_t color;
+    int32_t space;
+    lx_glyph_t glyph[128];
+    
+} lx_font_t;
+
+/*!
+ * Creates a new font structure
+ * \param path path to a freetype supported font file (ttf,otf,...)
+ * \param px desired font height in pixels
+ * \return pointer to new lx_font_t
+*/
+lx_font_t* lx_font_new(const char* path,int32_t px,uint32_t color);
+
+/*!
+ * Destroys a font
+ * \param font pointer to font
+*/
+void lx_font_delete(lx_font_t* font);
+
+typedef struct {
+    lx_font_t* font;
     ply_pixel_buffer_t* buffer;
     char* str;
 } lx_text_t;
 
-lx_text_t* lx_text_new(const char* str,uint32_t color);
+/*!
+ * Creates a new text surface
+ * \param font pointer to already loaded font
+ * \param str C string with text
+ * \param color argb text color
+ * \return pointer to new lx_text_t
+*/
+lx_text_t* lx_text_new(lx_font_t* font,const char* str);
 
+/*!
+ * Destroys text
+ * \param text pointer to text
+*/
 void lx_text_delete(lx_text_t* text);
-
-void lx_text_free_cache();
 
 #endif

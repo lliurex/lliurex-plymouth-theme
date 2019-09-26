@@ -29,4 +29,5 @@ install(
     DESTINATION share/plymouth/themes/lliurex/
 )
 
+install( FILES "font.ttf" DESTINATION share/plymouth/themes/lliurex/)
 

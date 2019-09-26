@@ -68,6 +68,7 @@ struct _ply_boot_splash_plugin
     
     uint32_t palette[LX_MAX_PALETTE];
     
+    lx_font_t* font;
     lx_text_t* message;
     lx_text_t* status;
 };
@@ -261,6 +262,9 @@ create_plugin (ply_key_file_t* key_file)
         }
     }
     
+    sprintf(filename,"%s/font.ttf",path);
+    plugin->font=lx_font_new(filename,16,plugin->palette[LX_COLOR_TEXT]);
+    
     //setup fps
     if (ply_key_file_has_key(key_file,"config","fps")) {
         char* value=ply_key_file_get_value (key_file, "config", "fps");
@@ -297,7 +301,7 @@ destroy_plugin (ply_boot_splash_plugin_t* plugin)
 {
     lx_log_debug(__PRETTY_FUNCTION__);
     
-    lx_text_free_cache();
+    lx_font_delete(plugin->font);
     free(plugin);
 }
 
@@ -417,7 +421,7 @@ update_status (ply_boot_splash_plugin_t* plugin,
     
     //ignore default messages
     if (processed!=cpy) {
-        plugin->status=lx_text_new(processed,plugin->palette[LX_COLOR_TEXT]);
+        plugin->status=lx_text_new(plugin->font,processed);
     }
     
     free(cpy);
@@ -493,7 +497,7 @@ display_message (ply_boot_splash_plugin_t* plugin,
         plugin->message=NULL;
     }
     
-    plugin->message=lx_text_new(message,plugin->palette[LX_COLOR_TEXT]);
+    plugin->message=lx_text_new(plugin->font,message);
     
     lx_log_debug("message:%s",message);
 }

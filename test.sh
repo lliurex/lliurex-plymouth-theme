@@ -9,7 +9,7 @@ plymouthd --kernel-command-line="quiet splash"
 plymouth show-splash 
 plymouth display-message --text="Press enter to reboot"
 for ((I=0; I<$DURATION; I++)); do
-  plymouth --update=test$I;
+  plymouth --update="info:"test$I"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ<>[](){}+-_.,·$%&/?";
   sleep 1;
   done;
 plymouth quit
