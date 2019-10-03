@@ -5,6 +5,7 @@ ModuleName=liblliurex
 
 [config]
 path=/usr/share/plymouth/themes/lliurex
+font=hack/Hack-Regular.ttf
 fps=60
 
 [color]

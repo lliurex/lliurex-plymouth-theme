@@ -28,6 +28,7 @@
 #include "log.h"
 #include "text.h"
 #include "cmdline.h"
+#include "i18.h"
 
 #include <ply-boot-splash-plugin.h>
 #include <ply-logger.h>
@@ -210,7 +211,6 @@ on_timeout (ply_boot_splash_plugin_t* plugin)
             ply_pixel_display_get_height(plugin->screen[n].display));
     }
     
-    
     // program another timeout
     ply_event_loop_watch_for_timeout (plugin->loop,
                                 plugin->interval,
@@ -262,7 +262,8 @@ create_plugin (ply_key_file_t* key_file)
         }
     }
     
-    sprintf(filename,"%s/font.ttf",path);
+    char* font_name=ply_key_file_get_value (key_file, "config", "font");
+    sprintf(filename,"/usr/share/fonts/truetype/%s",font_name);
     plugin->font=lx_font_new(filename,16,plugin->palette[LX_COLOR_TEXT]);
     
     //setup fps
@@ -288,10 +289,19 @@ create_plugin (ply_key_file_t* key_file)
     
     for (size_t n=0;n<num_options;n++) {
         lx_log_debug("cmdline option %s",options[n]);
+        
+        const char* value=lx_cmdline_get_value(options[n],"debian-installer/language",'=');
+        if (value) {
+            lx_log_info("Using language %s",value);
+            lx_i18_set_lang(value);
+        }
+        
         free(options[n]);
     }
     
     free(options);
+    
+    
     
     return plugin;
 }
@@ -497,7 +507,7 @@ display_message (ply_boot_splash_plugin_t* plugin,
         plugin->message=NULL;
     }
     
-    plugin->message=lx_text_new(plugin->font,message);
+    plugin->message=lx_text_new(plugin->font,lx_i18(message));
     
     lx_log_debug("message:%s",message);
 }

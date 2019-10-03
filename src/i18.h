@@ -16,13 +16,20 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef LX_PLYMOUTH_CMDLINE
-#define LX_PLYMOUTH_CMDLINE
+#include <stdint.h>
 
-#include <stdlib.h>
+typedef struct {
+    uint16_t id;
+    const char* message;
+} lx_message_t;
 
-char** lx_cmdline_get(size_t* options);
+typedef struct {
+    uint16_t id;
+    const char* lang;
+    const char* message;
+} lx_translation_t;
 
-const char* lx_cmdline_get_value(const char* option,const char* key,char sep);
+void lx_i18_set_lang(const char* lang);
 
-#endif
+const char* lx_i18(const char* message);
+

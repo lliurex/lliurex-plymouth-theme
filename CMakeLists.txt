@@ -29,5 +29,8 @@ install(
     DESTINATION share/plymouth/themes/lliurex/
 )
 
-install( FILES "font.ttf" DESTINATION share/plymouth/themes/lliurex/)
 
+install(
+    PROGRAMS lliurex-plymouth
+    DESTINATION share/initramfs-tools/hooks
+)

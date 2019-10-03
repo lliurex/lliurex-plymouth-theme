@@ -17,7 +17,6 @@
 */
 
 #include "text.h"
-#include "font8x8_basic.h"
 #include "log.h"
 
 #include <stdlib.h>
@@ -70,7 +69,7 @@ lx_font_t* lx_font_new(const char* path,int px,uint32_t color)
         lx_log_debug("loaded:%d",index);
         
         if (index==0) {
-            lx_log_error("Ignoring char %d",n);
+            lx_log_info("Ignoring char %d",n);
             continue;
         }
         

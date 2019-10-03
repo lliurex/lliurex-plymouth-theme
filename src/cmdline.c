@@ -57,3 +57,26 @@ char** lx_cmdline_get(size_t* options)
 
     return words;
 }
+
+const char* lx_cmdline_get_value(const char* option,const char* key,char sep)
+{
+    size_t len = strlen(option);
+    size_t klen = strlen(key);
+    
+    if (len<3) {
+        return NULL;
+    }
+    
+    for (size_t n=0;n<len-1;n++) {
+        if (option[n]!=key[n]) {
+            
+            if (option[n]==sep && n==klen) {
+                return &option[n+1];
+            }
+            
+            break;
+        }
+    }
+    
+    return NULL;
+}
