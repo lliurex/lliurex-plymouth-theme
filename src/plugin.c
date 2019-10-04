@@ -17,9 +17,18 @@
 */
 
 #define LX_MAX_SCREENS 4
+#define LX_MAX_PALETTE  32
+
+#define LX_COLOR_BACKGROUND 0
+#define LX_COLOR_TEXT 1
+#define LX_COLOR_FOREGROUND_1 2
+#define LX_COLOR_FOREGROUND_2 3
+#define LX_COLOR_FOREGROUND_3 4
 
 #include "log.h"
 #include "text.h"
+#include "cmdline.h"
+#include "i18.h"
 
 #include <ply-boot-splash-plugin.h>
 #include <ply-logger.h>
@@ -44,6 +53,7 @@ typedef struct {
 struct _ply_boot_splash_plugin 
 {
     ply_event_loop_t* loop;
+    ply_boot_splash_mode_t mode;
     
     /* seconds between frames, usually 1/fps */
     double interval;
@@ -57,12 +67,9 @@ struct _ply_boot_splash_plugin
     
     double percent;
     
-    struct {
-        uint32_t background;
-        uint32_t foreground;
-        uint32_t text;
-    } color;
+    uint32_t palette[LX_MAX_PALETTE];
     
+    lx_font_t* font;
     lx_text_t* message;
     lx_text_t* status;
 };
@@ -105,6 +112,22 @@ static void on_draw (void* user_data,
         return;
     }
     
+    uint32_t progress_bar_color=0;
+    
+    switch (plugin->mode) {
+        case PLY_BOOT_SPLASH_MODE_BOOT_UP:
+            progress_bar_color=plugin->palette[LX_COLOR_FOREGROUND_1];
+        break;
+        
+        case PLY_BOOT_SPLASH_MODE_SHUTDOWN:
+            progress_bar_color=plugin->palette[LX_COLOR_FOREGROUND_2];
+        break;
+        
+        case PLY_BOOT_SPLASH_MODE_UPDATES:
+            progress_bar_color=plugin->palette[LX_COLOR_FOREGROUND_3];
+        break;
+    }
+    
     //fill brackground
     ply_rectangle_t rect;
     
@@ -115,7 +138,7 @@ static void on_draw (void* user_data,
     
     ply_pixel_buffer_fill_with_hex_color(pixel_buffer,
                                          &rect,
-                                         plugin->color.background);
+                                         plugin->palette[LX_COLOR_BACKGROUND]);
     
     //logo
     rect.width = ply_image_get_width(plugin->image.logo);
@@ -138,7 +161,7 @@ static void on_draw (void* user_data,
             int px = i;
             int py = ph - j;
             
-            data[px+py*width] = plugin->color.foreground;
+            data[px+py*width] = progress_bar_color;
         }
     }
     
@@ -188,7 +211,6 @@ on_timeout (ply_boot_splash_plugin_t* plugin)
             ply_pixel_display_get_height(plugin->screen[n].display));
     }
     
-    
     // program another timeout
     ply_event_loop_watch_for_timeout (plugin->loop,
                                 plugin->interval,
@@ -218,30 +240,31 @@ create_plugin (ply_key_file_t* key_file)
     
     plugin->image.logo=ply_image_new(filename);
     
-    //setup colors
-    if (ply_key_file_has_key(key_file,"color","background")) {
-        char* value=ply_key_file_get_value (key_file, "color", "background");
-        plugin->color.background=strtol(value,NULL,16);
-    }
-    else {
-        plugin->color.background=0xeff0f1ff;
+    //default palette values
+    plugin->palette[0]=0xeff0f1ff; //background
+    plugin->palette[1]=0xff808080; //text
+    plugin->palette[2]=0xff3daee9; //foreground 1
+    plugin->palette[3]=0xffda4453; //foreground 2
+    
+    //load palette
+    for (int n=0;n<LX_MAX_PALETTE;n++) {
+        char id[4];
+        sprintf(id,"p%02d",n);
+        
+        if (ply_key_file_has_key(key_file,"palette",id)) {
+            char* value=ply_key_file_get_value (key_file, "palette",id);
+            if (n>0) {
+                plugin->palette[n]=rgba_to_argb(strtol(value,NULL,16));
+            }
+            else {
+                plugin->palette[n]=strtol(value,NULL,16);
+            }
+        }
     }
     
-    if (ply_key_file_has_key(key_file,"color","foreground")) {
-        char* value=ply_key_file_get_value (key_file, "color", "foreground");
-        plugin->color.foreground=rgba_to_argb(strtol(value,NULL,16));
-    }
-    else {
-        plugin->color.foreground=0xff3daee9;
-    }
-    
-    if (ply_key_file_has_key(key_file,"color","text")) {
-        char* value=ply_key_file_get_value (key_file, "color", "text");
-        plugin->color.text=rgba_to_argb(strtol(value,NULL,16));
-    }
-    else {
-        plugin->color.text=0xff808080;
-    }
+    char* font_name=ply_key_file_get_value (key_file, "config", "font");
+    sprintf(filename,"/usr/share/fonts/truetype/%s",font_name);
+    plugin->font=lx_font_new(filename,16,plugin->palette[LX_COLOR_TEXT]);
     
     //setup fps
     if (ply_key_file_has_key(key_file,"config","fps")) {
@@ -261,6 +284,24 @@ create_plugin (ply_key_file_t* key_file)
         lx_log_info("Using default FPS: 30");
     }
     
+    size_t num_options;
+    char** options = lx_cmdline_get(&num_options);
+    
+    for (size_t n=0;n<num_options;n++) {
+        lx_log_debug("cmdline option %s",options[n]);
+        
+        const char* value=lx_cmdline_get_value(options[n],"debian-installer/language",'=');
+        if (value) {
+            lx_log_info("Using language %s",value);
+            lx_i18_set_lang(value);
+        }
+        
+        free(options[n]);
+    }
+    
+    free(options);
+    
+    
     
     return plugin;
 }
@@ -270,7 +311,7 @@ destroy_plugin (ply_boot_splash_plugin_t* plugin)
 {
     lx_log_debug(__PRETTY_FUNCTION__);
     
-    lx_text_free_cache();
+    lx_font_delete(plugin->font);
     free(plugin);
 }
 
@@ -339,6 +380,7 @@ show_splash_screen (ply_boot_splash_plugin_t* plugin,
     lx_log_debug(__PRETTY_FUNCTION__);
     
     plugin->loop=loop;
+    plugin->mode=mode;
     
     /* load resources */
     if (!ply_image_load(plugin->image.logo)) {
@@ -389,7 +431,7 @@ update_status (ply_boot_splash_plugin_t* plugin,
     
     //ignore default messages
     if (processed!=cpy) {
-        plugin->status=lx_text_new(processed,plugin->color.text);
+        plugin->status=lx_text_new(plugin->font,processed);
     }
     
     free(cpy);
@@ -465,7 +507,7 @@ display_message (ply_boot_splash_plugin_t* plugin,
         plugin->message=NULL;
     }
     
-    plugin->message=lx_text_new(message,plugin->color.text);
+    plugin->message=lx_text_new(plugin->font,lx_i18(message));
     
     lx_log_debug("message:%s",message);
 }

@@ -30,3 +30,7 @@ install(
 )
 
 
+install(
+    PROGRAMS lliurex-plymouth
+    DESTINATION share/initramfs-tools/hooks
+)
