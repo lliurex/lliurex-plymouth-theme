@@ -1,4 +1,4 @@
-lliurex-plymouth-theme (1.0.0.0) bionic; urgency=medium
+lliurex-plymouth-theme (1.0.0.1) bionic; urgency=medium
 
   * Master tag: 7fa79e520dda964f0ef2a6b3ff314cab20fce76d
   * Using freetype rendered fonts instead of embedded bitmap
