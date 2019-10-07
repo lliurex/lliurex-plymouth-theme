@@ -19,4 +19,5 @@ esac
 . /usr/share/initramfs-tools/hook-functions
 
 #there is room for improvement
+mkdir -p "${DESTDIR}/usr/share/fonts/truetype/hack/"
 cp -a /usr/share/fonts/truetype/hack/Hack-Regular.ttf "${DESTDIR}/usr/share/fonts/truetype/hack/"
