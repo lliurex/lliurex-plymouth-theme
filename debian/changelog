@@ -1,3 +1,10 @@
+lliurex-plymouth-theme (1.0.1.0) bionic; urgency=medium
+
+  * Master tag: 9871d47f37ab73efa11607929ec1d95fcff03b67
+  * Fixed bug in initramfs script (missing mkdir)
+
+ -- Enrique Medina Gremaldos <quiqueiii@gmail.com>  Mon, 07 Oct 2019 09:22:05 +0200
+
 lliurex-plymouth-theme (1.0.0.1) bionic; urgency=medium
 
   * Master tag: 7fa79e520dda964f0ef2a6b3ff314cab20fce76d
