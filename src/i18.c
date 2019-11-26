@@ -24,7 +24,7 @@
 char _lang[32];
 
 lx_message_t messages[]={
-    {0,"Please remove the installation medium, then press ENTER:"},
+    {0,"Please remove the installation medium, then press ENTER: "},
     {1,"Message 1"},
     {2,"Message 2"},
     {0xff,""}
