@@ -1,3 +1,10 @@
+lliurex-plymouth-theme (1.0.2.0) bionic; urgency=medium
+
+  * Master tag: 325ffe9d7d0774b82c1acd0e42855ddea0fa014d
+  * Fixed some translations
+
+ -- Enrique Medina Gremaldos <quiqueiii@gmail.com>  Thu, 28 Nov 2019 09:35:13 +0100
+
 lliurex-plymouth-theme (1.0.1.0) bionic; urgency=medium
 
   * Master tag: 9871d47f37ab73efa11607929ec1d95fcff03b67
