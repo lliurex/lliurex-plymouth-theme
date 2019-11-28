@@ -31,9 +31,10 @@ lx_message_t messages[]={
 };
 
 lx_translation_t translations[]={
-    {0,"es","Por favor, saque el medio de instalacion y presione INTRO"},
+    {0,"es","Por favor, saque el medio de instalacion y presione INTRO: "},
     {1,"es","Mensaje 1"},
     {2,"es","Mensaje 2"},
+    {0,"ca_ES@valencia","Per favor, extrau el medi d'instal·lació i pressiona INTRO: "},
     {0xff,"",""}
 };
 
