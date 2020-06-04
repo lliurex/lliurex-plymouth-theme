@@ -29,6 +29,7 @@
 #include "text.h"
 #include "cmdline.h"
 #include "i18.h"
+#include "noise.h"
 
 #include <ply-boot-splash-plugin.h>
 #include <ply-logger.h>
@@ -45,6 +46,11 @@
 typedef struct {
     uint32_t id;
     ply_pixel_display_t* display;
+    
+    struct {
+        ply_pixel_buffer_t* buffer;
+        bool owner;
+    } background;
 } lx_screen_t;
 
 /*
@@ -84,6 +90,34 @@ static uint32_t rgba_to_argb(uint32_t color)
     tmp = tmp | ((color<<24) & 0xff000000);
     
     return tmp;
+}
+
+static void hline (ply_pixel_buffer_t* pixel_buffer,
+                   int x0, int x1, int y,
+                   uint32_t pixel
+            ) {
+
+    uint32_t* data = ply_pixel_buffer_get_argb32_data(pixel_buffer);
+    int width = ply_pixel_buffer_get_width(pixel_buffer);
+    
+    for (int x=x0;x<x1;x++) {
+        data[x+y*width] = pixel;
+    }
+
+}
+
+static void vline (ply_pixel_buffer_t* pixel_buffer,
+                   int x, int y0, int y1,
+                   uint32_t pixel
+            ) {
+
+    uint32_t* data = ply_pixel_buffer_get_argb32_data(pixel_buffer);
+    int width = ply_pixel_buffer_get_width(pixel_buffer);
+    
+    for (int y=y0;y<y1;y++) {
+        data[x+y*width] = pixel;
+    }
+
 }
 
 /* Plugin callbacks */
@@ -128,6 +162,65 @@ static void on_draw (void* user_data,
         break;
     }
     
+    if (screen->background.buffer==NULL) {
+        int mw = ply_pixel_display_get_width(pixel_display);
+        int mh = ply_pixel_display_get_height(pixel_display);
+        
+        bool found=false;
+        
+        for (size_t n=0;n<plugin->screens;n++) {
+            int nw = ply_pixel_display_get_width(plugin->screen[n].display);
+            int nh = ply_pixel_display_get_height(plugin->screen[n].display);
+            
+            // there is some room for improvement, using cropped bigger images
+            if (nw==mw && nh==mw) {
+                found=true;
+                screen->background.buffer=plugin->screen[n].background.buffer;
+                screen->background.owner=false;
+            }
+        }
+        
+        //if not found a similar one, create one and draw it
+        if (!found) {
+            screen->background.owner=true;
+            screen->background.buffer = ply_pixel_buffer_new(mw,mh);
+            
+            uint32_t* data = ply_pixel_buffer_get_argb32_data(screen->background.buffer);
+            ply_rectangle_t rect;
+    
+            for (int j=0;j<height;j++) {
+                for (int i=0;i<width;i++) {
+                    uint8_t grey = 8.0 * lx_noise_perlin_2d(i,j,0.025f,4);
+                    grey+=(255-8);
+                    data[i+j*width] = 0xff000000 | grey<<16 | grey<<8 | grey;
+                }
+            }
+            
+            int hstep=16;
+    
+            for (int j=0;j<height;j+=hstep) {
+                hline(screen->background.buffer,0,width,j,0xffe9e9e9);
+            }
+            
+            int vstep=16;
+            
+            for (int i=0;i<width;i+=vstep) {
+                vline(screen->background.buffer,i,0,height,0xffe9e9e9);
+            }
+            
+            hstep*=5;
+            for (int j=0;j<height;j+=hstep) {
+                hline(screen->background.buffer,0,width,j,0xffc9c9c9);
+            }
+            
+            vstep*=5;
+            for (int i=0;i<width;i+=vstep) {
+                vline(screen->background.buffer,i,0,height,0xffc9c9c9);
+            }
+        }
+        
+    }
+    
     //fill brackground
     ply_rectangle_t rect;
     
@@ -136,9 +229,24 @@ static void on_draw (void* user_data,
     rect.width=width;
     rect.height=height;
     
-    ply_pixel_buffer_fill_with_hex_color(pixel_buffer,
-                                         &rect,
-                                         plugin->palette[LX_COLOR_BACKGROUND]);
+    ply_pixel_buffer_fill_with_buffer(pixel_buffer,screen->background.buffer,0,0);
+    
+    // raw pixel access to color buffer
+    uint32_t* data = ply_pixel_buffer_get_argb32_data(pixel_buffer);
+    
+    //progress bar
+    
+    int pw = plugin->percent*width;
+    int ph = height-48;
+    
+    for (int j=0;j<32;j++) {
+        for (int i=0;i<pw;i++) {
+            int px = i;
+            int py = ph - j;
+            
+            data[px+py*width] = progress_bar_color;
+        }
+    }
     
     //logo
     rect.width = ply_image_get_width(plugin->image.logo);
@@ -149,21 +257,6 @@ static void on_draw (void* user_data,
     
     ply_pixel_buffer_t* lpx = ply_image_get_buffer(plugin->image.logo);
     ply_pixel_buffer_fill_with_buffer(pixel_buffer,lpx,rect.x,rect.y);
-    
-    //progress bar
-    uint32_t* data = ply_pixel_buffer_get_argb32_data(pixel_buffer);
-    
-    int pw = plugin->percent*width;
-    int ph = height-48;
-    
-    for (int j=0;j<8;j++) {
-        for (int i=0;i<pw;i++) {
-            int px = i;
-            int py = ph - j;
-            
-            data[px+py*width] = progress_bar_color;
-        }
-    }
     
     //message
     if (plugin->message) {
@@ -301,8 +394,6 @@ create_plugin (ply_key_file_t* key_file)
     
     free(options);
     
-    
-    
     return plugin;
 }
 
@@ -310,6 +401,7 @@ static void
 destroy_plugin (ply_boot_splash_plugin_t* plugin)
 {
     lx_log_debug(__PRETTY_FUNCTION__);
+    //TODO: free images
     
     lx_font_delete(plugin->font);
     free(plugin);
