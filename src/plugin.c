@@ -24,6 +24,8 @@
 #define LX_COLOR_FOREGROUND_1 2
 #define LX_COLOR_FOREGROUND_2 3
 #define LX_COLOR_FOREGROUND_3 4
+#define LX_COLOR_FOREGROUND_4 5
+#define LX_COLOR_FOREGROUND_5 6
 
 #include "log.h"
 #include "text.h"
@@ -190,8 +192,8 @@ static void on_draw (void* user_data,
     
             for (int j=0;j<height;j++) {
                 for (int i=0;i<width;i++) {
-                    uint8_t grey = 8.0 * lx_noise_perlin_2d(i,j,0.025f,4);
-                    grey+=(255-8);
+                    uint8_t grey = 12.0 * lx_noise_perlin_2d(i,j,0.025f,4);
+                    grey+=(255-12);
                     data[i+j*width] = 0xff000000 | grey<<16 | grey<<8 | grey;
                 }
             }
@@ -199,23 +201,23 @@ static void on_draw (void* user_data,
             int hstep=16;
     
             for (int j=0;j<height;j+=hstep) {
-                hline(screen->background.buffer,0,width,j,0xffe9e9e9);
+                hline(screen->background.buffer,0,width,j,plugin->palette[LX_COLOR_FOREGROUND_4]);
             }
             
             int vstep=16;
             
             for (int i=0;i<width;i+=vstep) {
-                vline(screen->background.buffer,i,0,height,0xffe9e9e9);
+                vline(screen->background.buffer,i,0,height,plugin->palette[LX_COLOR_FOREGROUND_4]);
             }
             
             hstep*=5;
             for (int j=0;j<height;j+=hstep) {
-                hline(screen->background.buffer,0,width,j,0xffc9c9c9);
+                hline(screen->background.buffer,0,width,j,plugin->palette[LX_COLOR_FOREGROUND_5]);
             }
             
             vstep*=5;
             for (int i=0;i<width;i+=vstep) {
-                vline(screen->background.buffer,i,0,height,0xffc9c9c9);
+                vline(screen->background.buffer,i,0,height,plugin->palette[LX_COLOR_FOREGROUND_5]);
             }
         }
         
@@ -338,6 +340,9 @@ create_plugin (ply_key_file_t* key_file)
     plugin->palette[1]=0xff808080; //text
     plugin->palette[2]=0xff3daee9; //foreground 1
     plugin->palette[3]=0xffda4453; //foreground 2
+    plugin->palette[4]=0xfffdbc4b; //foreground 3
+    plugin->palette[5]=0xffe9e9e9; //foreground 4
+    plugin->palette[6]=0xffc9c9c9; //foreground 5
     
     //load palette
     for (int n=0;n<LX_MAX_PALETTE;n++) {
@@ -401,7 +406,12 @@ static void
 destroy_plugin (ply_boot_splash_plugin_t* plugin)
 {
     lx_log_debug(__PRETTY_FUNCTION__);
-    //TODO: free images
+    
+    for (int n=0;n<plugin->screens;n++) {
+        if (plugin->screen[n].background.owner) {
+            ply_pixel_buffer_free(plugin->screen[n].background.buffer);
+        }
+    }
     
     lx_font_delete(plugin->font);
     free(plugin);

@@ -8,11 +8,6 @@ path=/usr/share/plymouth/themes/lliurex
 font=hack/Hack-Regular.ttf
 fps=60
 
-[color]
-background=0xeff0f1ff
-foreground=0x3daee9ff
-text=0x31363bff
-
 [palette]
 #background
 p00=0xeff0f1ff
@@ -28,3 +23,9 @@ p03=0xda4453ff
 
 #foreground 3
 p04=0xfdbc4bff
+
+#foreground 4
+p05=0xe9e9e9ff
+
+#foreground 5
+p06=0xc9c9c9ff
