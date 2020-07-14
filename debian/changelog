@@ -1,3 +1,11 @@
+lliurex-plymouth-theme (1.1.0.0) bionic; urgency=medium
+
+  * Master tag: 9516a2ac92d342198ddc0968edc8a178dc881d31
+  * 19.7 look and feel
+  * Added a perlin noise texture code
+
+ -- Enrique Medina Gremaldos <quiqueiii@gmail.com>  Tue, 14 Jul 2020 11:53:59 +0200
+
 lliurex-plymouth-theme (1.0.2.0) bionic; urgency=medium
 
   * Master tag: 325ffe9d7d0774b82c1acd0e42855ddea0fa014d
