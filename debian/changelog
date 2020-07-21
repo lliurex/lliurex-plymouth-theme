@@ -1,3 +1,10 @@
+lliurex-plymouth-theme (1.2.0.0) bionic; urgency=medium
+
+  * Master tag: d21b4787a82014acb03eefe252aa7b4fa252ef6e
+  * Added support to utf-8 latin characters
+
+ -- Enrique Medina Gremaldos <quiqueiii@gmail.com>  Tue, 21 Jul 2020 17:40:45 +0200
+
 lliurex-plymouth-theme (1.1.0.0) bionic; urgency=medium
 
   * Master tag: 9516a2ac92d342198ddc0968edc8a178dc881d31
