@@ -31,6 +31,41 @@
 FT_Library library;
 int ft_counter=0;
 
+static uint16_t* create_unicode(const char* str)
+{
+    uint16_t* ustr = calloc(strlen(str)*2,sizeof(uint16_t));
+    int m=0;
+    uint16_t ucode=0;
+    
+    for (int n=0;n<strlen(str);n++) {
+        ucode = 0;
+        uint8_t a = str[n];
+        if (a<=0x7f) {
+            ucode = a;
+        }
+        else {
+            n++;
+            uint8_t b = str[n];
+            
+            if ( ((b&0xc0)==0x80) && ((a&0xe0)==0xc0) ) {
+                ucode = b & 0x3f;
+                uint16_t hi = (a & 0x1f)<<6;
+                
+                ucode = ucode | hi;
+            }
+            else {
+                lx_log_error("bad utf-8 format %x%x",a,b);
+                ucode = 0;
+            }
+        }
+        
+        ustr[m] = ucode;
+        m++;
+    }
+    
+    return ustr;
+}
+
 lx_font_t* lx_font_new(const char* path,int px,uint32_t color)
 {
     lx_font_t* font;
@@ -50,7 +85,7 @@ lx_font_t* lx_font_new(const char* path,int px,uint32_t color)
     font->space=px/2;
     font->color=color & 0x00ffffff; //clear alpha
     
-    for (int n=0;n<128;n++) {
+    for (int n=0;n<512;n++) {
         memset(&font->glyph[n],0,sizeof(lx_glyph_t));
     }
     
@@ -60,7 +95,7 @@ lx_font_t* lx_font_new(const char* path,int px,uint32_t color)
     error=FT_Set_Pixel_Sizes(font->face,0,px);
     lx_log_debug("Set size: %d",error);
 
-    for (int n=32;n<128;n++) {
+    for (int n=32;n<512;n++) {
         lx_log_debug("loading %d",n);
         //error=FT_Load_Char(font->face,n,FT_LOAD_RENDER);
         FT_UInt index;
@@ -125,7 +160,7 @@ lx_font_t* lx_font_new(const char* path,int px,uint32_t color)
 
 void lx_font_delete(lx_font_t* font)
 {
-    for (int n=32;n<128;n++) {
+    for (int n=32;n<512;n++) {
         if (font->glyph[n].buffer) {
             ply_pixel_buffer_free(font->glyph[n].buffer);
         }
@@ -148,6 +183,7 @@ lx_text_t* lx_text_new(lx_font_t* font,const char* str)
     text=calloc(1,sizeof(lx_text_t));
     text->str=strdup(str);
     text->font=font;
+    text->ustr=create_unicode(str);
     
     int width=0;
     int height=0;
@@ -156,8 +192,10 @@ lx_text_t* lx_text_new(lx_font_t* font,const char* str)
     
     lx_log_debug("text:%s,%d",str,strlen(str));
     
-    for (int n=0;n<strlen(str);n++) {
-        uint32_t code = 0x7f & str[n];
+    uint16_t* uc=text->ustr;
+    while (*uc!=0) {
+        uint32_t code = 0x1ff & *uc;
+        uc++;
         
         lx_glyph_t* glyph = &font->glyph[code];
         
@@ -198,8 +236,10 @@ lx_text_t* lx_text_new(lx_font_t* font,const char* str)
     
     lx_log_debug("top bottom baseline %d %d %d",top,bottom,baseline);
     
-    for (int n=0;n<strlen(str);n++) {
-        uint32_t code = 0x7f & str[n];
+    uc=text->ustr;
+    while (*uc!=0) {
+        uint32_t code = 0x1ff & *uc;
+        uc++;
         
         lx_glyph_t* glyph = &font->glyph[code];
         
@@ -223,6 +263,7 @@ void lx_text_delete(lx_text_t* text)
 {
     if (text) {
         free(text->str);
+        free(text->ustr);
         ply_pixel_buffer_free(text->buffer);
         free(text);
     }

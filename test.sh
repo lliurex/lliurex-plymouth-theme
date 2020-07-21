@@ -7,7 +7,7 @@ fi
 
 plymouthd --kernel-command-line="quiet splash"
 plymouth show-splash 
-plymouth display-message --text="Please remove the installation medium, then press ENTER:"
+plymouth display-message --text="Instal·lació"
 for ((I=0; I<$DURATION; I++)); do
   plymouth --update="info:"test$I"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ<>[](){}+-_.,·$%&/?@";
   sleep 1;
