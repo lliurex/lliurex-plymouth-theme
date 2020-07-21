@@ -41,7 +41,7 @@ typedef struct {
     int32_t px;
     uint32_t color;
     int32_t space;
-    lx_glyph_t glyph[128];
+    lx_glyph_t glyph[512];
     
 } lx_font_t;
 
@@ -63,6 +63,7 @@ typedef struct {
     lx_font_t* font;
     ply_pixel_buffer_t* buffer;
     char* str;
+    uint16_t* ustr;
 } lx_text_t;
 
 /*!
