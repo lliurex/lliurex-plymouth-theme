@@ -1,3 +1,9 @@
+lliurex-plymouth-theme (1.2.0.0) focal; urgency=medium
+
+  * Focal port
+
+ -- M.Angel Juan <m.angel.juan@gmail.com>  Wed, 07 Oct 2020 17:24:45 +0200
+
 lliurex-plymouth-theme (1.2.0.0) bionic; urgency=medium
 
   * Master tag: d21b4787a82014acb03eefe252aa7b4fa252ef6e
