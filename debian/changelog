@@ -1,3 +1,10 @@
+lliurex-plymouth-theme (21.0.0.0) focal; urgency=medium
+
+  * Master tag: e43a01c8b5b5098def35cdf791f3df1667ff8c86
+  * New look for lliurex 21. More testing needed
+
+ -- Enrique Medina Gremaldos <quiqueiii@gmail.com>  Tue, 11 May 2021 14:46:49 +0200
+
 lliurex-plymouth-theme (1.2.0.0) focal; urgency=medium
 
   * Focal port
