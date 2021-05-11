@@ -198,27 +198,6 @@ static void on_draw (void* user_data,
                 }
             }
             
-            int hstep=16;
-    
-            for (int j=0;j<height;j+=hstep) {
-                hline(screen->background.buffer,0,width,j,plugin->palette[LX_COLOR_FOREGROUND_4]);
-            }
-            
-            int vstep=16;
-            
-            for (int i=0;i<width;i+=vstep) {
-                vline(screen->background.buffer,i,0,height,plugin->palette[LX_COLOR_FOREGROUND_4]);
-            }
-            
-            hstep*=5;
-            for (int j=0;j<height;j+=hstep) {
-                hline(screen->background.buffer,0,width,j,plugin->palette[LX_COLOR_FOREGROUND_5]);
-            }
-            
-            vstep*=5;
-            for (int i=0;i<width;i+=vstep) {
-                vline(screen->background.buffer,i,0,height,plugin->palette[LX_COLOR_FOREGROUND_5]);
-            }
         }
         
     }
@@ -239,7 +218,7 @@ static void on_draw (void* user_data,
     //progress bar
     
     int pw = plugin->percent*width;
-    int ph = height-48;
+    int ph = height-8;
     
     for (int j=0;j<32;j++) {
         for (int i=0;i<pw;i++) {
