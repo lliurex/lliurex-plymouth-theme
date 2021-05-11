@@ -10,10 +10,10 @@ fps=60
 
 [palette]
 #background
-p00=0xeff0f1ff
+p00=0x131313ff
 
 #text
-p01=0x31363bff
+p01=0xffffffff
 
 #foreground 1
 p02=0x3daee9ff
