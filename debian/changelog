@@ -1,3 +1,10 @@
+lliurex-plymouth-theme (21.0.1.0) focal; urgency=medium
+
+  * Master tag: 6bcc0658166c76273f318333af229ee0bc821a1b
+  * using black background (as pretended on  mockup)
+
+ -- Enrique Medina Gremaldos <quiqueiii@gmail.com>  Thu, 03 Jun 2021 11:21:21 +0200
+
 lliurex-plymouth-theme (21.0.0.0) focal; urgency=medium
 
   * Master tag: e43a01c8b5b5098def35cdf791f3df1667ff8c86
