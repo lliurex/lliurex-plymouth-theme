@@ -192,8 +192,8 @@ static void on_draw (void* user_data,
     
             for (int j=0;j<height;j++) {
                 for (int i=0;i<width;i++) {
-                    uint8_t grey = 12.0 * lx_noise_perlin_2d(i,j,0.025f,4);
-                    grey+=(255-12);
+                    uint8_t grey = 8.0 * lx_noise_perlin_2d(i,j,0.0125f,2);
+                    //grey+=(255-12);
                     data[i+j*width] = 0xff000000 | grey<<16 | grey<<8 | grey;
                 }
             }
@@ -218,9 +218,9 @@ static void on_draw (void* user_data,
     //progress bar
     
     int pw = plugin->percent*width;
-    int ph = height-8;
+    int ph = height-48;
     
-    for (int j=0;j<32;j++) {
+    for (int j=0;j<4;j++) {
         for (int i=0;i<pw;i++) {
             int px = i;
             int py = ph - j;
