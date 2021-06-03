@@ -1,3 +1,9 @@
+lliurex-plymouth-theme (21.1.0.0) focal; urgency=medium
+
+  * Added a simple firefly effect
+
+ -- Enrique Medina Gremaldos <quiqueiii@gmail.com>  Thu, 03 Jun 2021 12:58:14 +0200
+
 lliurex-plymouth-theme (21.0.1.0) focal; urgency=medium
 
   * Master tag: 6bcc0658166c76273f318333af229ee0bc821a1b
