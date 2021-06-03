@@ -42,6 +42,11 @@
 #include <stdio.h>
 #include <string.h>
 
+typedef struct {
+    float x,y,z;
+    float vx,vy,vz;
+} firefly_t;
+
 /*
  * Screen
  */
@@ -80,6 +85,8 @@ struct _ply_boot_splash_plugin
     lx_font_t* font;
     lx_text_t* message;
     lx_text_t* status;
+    
+    firefly_t fireflies[32];
 };
 
 /*
@@ -120,6 +127,11 @@ static void vline (ply_pixel_buffer_t* pixel_buffer,
         data[x+y*width] = pixel;
     }
 
+}
+
+static float frand()
+{
+    return rand()/(float)RAND_MAX;
 }
 
 /* Plugin callbacks */
@@ -225,6 +237,33 @@ static void on_draw (void* user_data,
             int px = i;
             int py = ph - j;
             
+            data[px+py*width] = progress_bar_color;
+        }
+    }
+    
+    for (int n=0;n<32;n++) {
+        
+        plugin->fireflies[n].x+=plugin->fireflies[n].vx;
+        plugin->fireflies[n].y+=plugin->fireflies[n].vy;
+        plugin->fireflies[n].z+=plugin->fireflies[n].vz;
+        
+        if (plugin->fireflies[n].z<0.0f) {
+            continue;
+        }
+        
+        //lx_log_debug("firefly %d z:%.2f",n,plugin->fireflies[n].z);
+        
+        float x = plugin->fireflies[n].x/plugin->fireflies[n].z;
+        float y = plugin->fireflies[n].y/plugin->fireflies[n].z;
+        
+        //lx_log_debug("firefly at: %.2f %.2f",x,y);
+        
+        int px = width* ((x+100.0f)/200.0f);
+        int py = height* ((y+100.0f)/200.0f);
+        
+        //lx_log_debug("firefly at: %d %d",px,py);
+        
+        if (px>=0 && px<width && py>=0 && py<height) {
             data[px+py*width] = progress_bar_color;
         }
     }
@@ -377,6 +416,17 @@ create_plugin (ply_key_file_t* key_file)
     }
     
     free(options);
+    
+    for (int n=0;n<32;n++) {
+        plugin->fireflies[n].x=(frand()*200.0f)-100.0f;
+        plugin->fireflies[n].y=(frand()*200.0f)-100.0f;
+        plugin->fireflies[n].z=(frand()*6.0f);
+        
+        plugin->fireflies[n].vx=(frand()*1.0f)-0.5f;
+        plugin->fireflies[n].vy=(frand()*1.0f)-0.5f;
+        plugin->fireflies[n].vz=0.1f*((frand()*1.0f)-0.5f);
+        //lx_log_debug("firefly z: %.2f %.2f",plugin->fireflies[n].z,plugin->fireflies[n].vz);
+    }
     
     return plugin;
 }
