@@ -1,3 +1,9 @@
+lliurex-plymouth-theme (22.0.0.0) focal; urgency=medium
+
+  * PNG based fireflies with isometric coordinates
+
+ -- Enrique Medina Gremaldos <quiqueiii@gmail.com>  Wed, 15 Jun 2022 14:15:47 +0200
+
 lliurex-plymouth-theme (21.1.0.0) focal; urgency=medium
 
   * Added a simple firefly effect
