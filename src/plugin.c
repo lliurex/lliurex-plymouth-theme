@@ -41,10 +41,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 typedef struct {
     float x,y,z;
     float vx,vy,vz;
+
+    float w;
+    float ws;
+    float r;
+    float h;
 } firefly_t;
 
 /*
@@ -73,6 +79,7 @@ struct _ply_boot_splash_plugin
     
     struct {
         ply_image_t* logo;
+        ply_image_t* firefly;
     } image;
     
     lx_screen_t screen[LX_MAX_SCREENS];
@@ -241,30 +248,28 @@ static void on_draw (void* user_data,
         }
     }
     
+    ply_pixel_buffer_t* fpx = ply_image_get_buffer(plugin->image.firefly);
+    rect.width = ply_image_get_width(plugin->image.firefly);
+    rect.height = ply_image_get_height(plugin->image.firefly);
+
     for (int n=0;n<32;n++) {
         
-        plugin->fireflies[n].x+=plugin->fireflies[n].vx;
-        plugin->fireflies[n].y+=plugin->fireflies[n].vy;
-        plugin->fireflies[n].z+=plugin->fireflies[n].vz;
+        int isox = cos(plugin->fireflies[n].w) * plugin->fireflies[n].r;
+        int isoy = sin(plugin->fireflies[n].w) * plugin->fireflies[n].r;
+
+        plugin->fireflies[n].w += plugin->fireflies[n].ws;
         
-        if (plugin->fireflies[n].z<0.0f) {
-            continue;
-        }
-        
-        //lx_log_debug("firefly %d z:%.2f",n,plugin->fireflies[n].z);
-        
-        float x = plugin->fireflies[n].x/plugin->fireflies[n].z;
-        float y = plugin->fireflies[n].y/plugin->fireflies[n].z;
-        
-        //lx_log_debug("firefly at: %.2f %.2f",x,y);
-        
-        int px = width* ((x+100.0f)/200.0f);
-        int py = height* ((y+100.0f)/200.0f);
-        
-        //lx_log_debug("firefly at: %d %d",px,py);
-        
-        if (px>=0 && px<width && py>=0 && py<height) {
-            data[px+py*width] = progress_bar_color;
+        int px = isox + isoy;
+        int py = (isox - isoy - plugin->fireflies[n].h )/2;
+
+        px += (width/2);
+        py += (height/2);
+
+        if (px>=rect.width && px<width-rect.width && py>=rect.height && py<height-rect.height) {
+            //data[px+py*width] = progress_bar_color;
+
+            ply_pixel_buffer_fill_with_buffer(pixel_buffer,fpx,px,py);
+
         }
     }
     
@@ -274,7 +279,7 @@ static void on_draw (void* user_data,
     
     rect.x = (width/2) - (rect.width/2);
     rect.y = (height/2) - (rect.height/2);
-    
+
     ply_pixel_buffer_t* lpx = ply_image_get_buffer(plugin->image.logo);
     ply_pixel_buffer_fill_with_buffer(pixel_buffer,lpx,rect.x,rect.y);
     
@@ -352,6 +357,10 @@ create_plugin (ply_key_file_t* key_file)
     sprintf(filename,"%s/logo.png",path);
     
     plugin->image.logo=ply_image_new(filename);
+
+    sprintf(filename,"%s/firefly.png",path);
+
+    plugin->image.firefly=ply_image_new(filename);
     
     //default palette values
     plugin->palette[0]=0xeff0f1ff; //background
@@ -418,14 +427,12 @@ create_plugin (ply_key_file_t* key_file)
     free(options);
     
     for (int n=0;n<32;n++) {
-        plugin->fireflies[n].x=(frand()*200.0f)-100.0f;
-        plugin->fireflies[n].y=(frand()*200.0f)-100.0f;
-        plugin->fireflies[n].z=(frand()*6.0f);
-        
-        plugin->fireflies[n].vx=(frand()*1.0f)-0.5f;
-        plugin->fireflies[n].vy=(frand()*1.0f)-0.5f;
-        plugin->fireflies[n].vz=0.1f*((frand()*1.0f)-0.5f);
-        //lx_log_debug("firefly z: %.2f %.2f",plugin->fireflies[n].z,plugin->fireflies[n].vz);
+
+        plugin->fireflies[n].w = frand() * 2.0f * 3.14159f;
+        plugin->fireflies[n].ws = frand() * 0.01f;
+
+        plugin->fireflies[n].r = frand() * 300.0f;
+        plugin->fireflies[n].h = frand() * 32.0f;
     }
     
     return plugin;
@@ -518,6 +525,12 @@ show_splash_screen (ply_boot_splash_plugin_t* plugin,
         lx_log_error("Failed to load logo image");
         return false;
     }
+
+    if (!ply_image_load(plugin->image.firefly)) {
+        lx_log_error("Failed to load firefly image");
+        return false;
+    }
+
     //exit callback
     ply_event_loop_watch_for_exit (loop, (ply_event_loop_exit_handler_t)
                                        detach_from_event_loop,
