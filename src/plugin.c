@@ -32,6 +32,7 @@
 #include "cmdline.h"
 #include "i18.h"
 #include "noise.h"
+#include "texture.h"
 
 #include <ply-boot-splash-plugin.h>
 #include <ply-logger.h>
@@ -42,16 +43,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-
-typedef struct {
-    float x,y,z;
-    float vx,vy,vz;
-
-    float w;
-    float ws;
-    float r;
-    float h;
-} firefly_t;
 
 /*
  * Screen
@@ -79,7 +70,6 @@ struct _ply_boot_splash_plugin
     
     struct {
         ply_image_t* logo;
-        ply_image_t* firefly;
     } image;
     
     lx_screen_t screen[LX_MAX_SCREENS];
@@ -93,7 +83,6 @@ struct _ply_boot_splash_plugin
     lx_text_t* message;
     lx_text_t* status;
     
-    firefly_t fireflies[32];
 };
 
 /*
@@ -108,6 +97,33 @@ static uint32_t rgba_to_argb(uint32_t color)
     return tmp;
 }
 
+static void pixel_to_color(uint32_t pixel,float* color)
+{
+    color[0] = (pixel & 0xff000000) >> 24;
+    color[1] = (pixel & 0x00ff0000) >> 16;
+    color[2] = (pixel & 0x0000ff00) >> 8;
+    color[3] = (pixel & 0x000000ff) ;
+
+    const float F=1.0f/255.0f;
+
+    color[0]*=F;
+    color[1]*=F;
+    color[2]*=F;
+    color[3]*=F;
+}
+
+static uint32_t color_to_pixel(float* color)
+{
+    uint32_t a = color[0] * 255;
+    uint32_t r = color[1] * 255;
+    uint32_t g = color[2] * 255;
+    uint32_t b = color[3] * 255;
+
+    uint32_t pixel = (a<<24) | (r<<16) | (g<<8) | b;
+
+    return pixel;
+}
+
 static void hline (ply_pixel_buffer_t* pixel_buffer,
                    int x0, int x1, int y,
                    uint32_t pixel
@@ -116,7 +132,7 @@ static void hline (ply_pixel_buffer_t* pixel_buffer,
     uint32_t* data = ply_pixel_buffer_get_argb32_data(pixel_buffer);
     int width = ply_pixel_buffer_get_width(pixel_buffer);
     
-    for (int x=x0;x<x1;x++) {
+    for (int x=x0;x<=x1;x++) {
         data[x+y*width] = pixel;
     }
 
@@ -130,7 +146,7 @@ static void vline (ply_pixel_buffer_t* pixel_buffer,
     uint32_t* data = ply_pixel_buffer_get_argb32_data(pixel_buffer);
     int width = ply_pixel_buffer_get_width(pixel_buffer);
     
-    for (int y=y0;y<y1;y++) {
+    for (int y=y0;y<=y1;y++) {
         data[x+y*width] = pixel;
     }
 
@@ -139,6 +155,35 @@ static void vline (ply_pixel_buffer_t* pixel_buffer,
 static float frand()
 {
     return rand()/(float)RAND_MAX;
+}
+
+static void tint(ply_pixel_buffer_t* pixel_buffer,uint32_t color)
+{
+    uint32_t* data = ply_pixel_buffer_get_argb32_data(pixel_buffer);
+    int width = ply_pixel_buffer_get_width(pixel_buffer);
+    int height = ply_pixel_buffer_get_height(pixel_buffer);
+
+    float c[4];
+
+    pixel_to_color(color,c);
+
+    for (int j=0;j<height;j++) {
+        for (int i=0;i<width;i++) {
+            uint32_t pixel = data[i+j*width];
+
+            if (pixel!=0) {
+                float dest[4];
+                float alpha = ((pixel & 0xff000000)>>24)/255.0f;
+
+                dest[0] = alpha;
+                dest[1] = c[1] * alpha;
+                dest[2] = c[2] * alpha;
+                dest[3] = c[3] * alpha;
+
+                data[i+j*width] = color_to_pixel(dest);
+            }
+        }
+    }
 }
 
 /* Plugin callbacks */
@@ -211,12 +256,11 @@ static void on_draw (void* user_data,
     
             for (int j=0;j<height;j++) {
                 for (int i=0;i<width;i++) {
-                    uint8_t grey = 8.0 * lx_noise_perlin_2d(i,j,0.0125f,2);
-                    //grey+=(255-12);
-                    data[i+j*width] = 0xff000000 | grey<<16 | grey<<8 | grey;
+                    data[i+j*width] = lx_texture_get(i,j,64);
                 }
             }
-            
+
+            tint(ply_image_get_buffer(plugin->image.logo),progress_bar_color & 0x00ffffff);
         }
         
     }
@@ -233,46 +277,33 @@ static void on_draw (void* user_data,
     
     // raw pixel access to color buffer
     uint32_t* data = ply_pixel_buffer_get_argb32_data(pixel_buffer);
-    
+
     //progress bar
-    
-    int pw = plugin->percent*width;
-    int ph = height-48;
-    
-    for (int j=0;j<4;j++) {
-        for (int i=0;i<pw;i++) {
-            int px = i;
-            int py = ph - j;
-            
-            data[px+py*width] = progress_bar_color;
+
+    int pw = 256;
+    //int pw = plugin->percent*128;
+    int ph = 16;
+    int px = (width/2) - (pw/2);
+    int py = (height/1.8) - (ph/2);
+
+    hline(pixel_buffer,px,px+pw,py-1,progress_bar_color);
+    hline(pixel_buffer,px,px+pw,py,progress_bar_color);
+
+    hline(pixel_buffer,px,px+pw,py+ph,progress_bar_color);
+    hline(pixel_buffer,px,px+pw,py+ph+1,progress_bar_color);
+
+    vline(pixel_buffer,px,py,py+ph,progress_bar_color);
+    vline(pixel_buffer,px-1,py,py+ph,progress_bar_color);
+
+    vline(pixel_buffer,px+pw,py,py+ph,progress_bar_color);
+    vline(pixel_buffer,px+pw+1,py,py+ph,progress_bar_color);
+
+    for (int j=py+2;j<(py+ph-1);j++) {
+        for (int i=px+2;i<px + plugin->percent*(pw-1);i++) {
+            data[i+j*width] = progress_bar_color;
         }
     }
-    
-    ply_pixel_buffer_t* fpx = ply_image_get_buffer(plugin->image.firefly);
-    rect.width = ply_image_get_width(plugin->image.firefly);
-    rect.height = ply_image_get_height(plugin->image.firefly);
 
-    for (int n=0;n<32;n++) {
-        
-        int isox = cos(plugin->fireflies[n].w) * plugin->fireflies[n].r;
-        int isoy = sin(plugin->fireflies[n].w) * plugin->fireflies[n].r;
-
-        plugin->fireflies[n].w += plugin->fireflies[n].ws;
-        
-        int px = isox + isoy;
-        int py = (isox - isoy - plugin->fireflies[n].h )/2;
-
-        px += (width/2);
-        py += (height/2);
-
-        if (px>=rect.width && px<width-rect.width && py>=rect.height && py<height-rect.height) {
-            //data[px+py*width] = progress_bar_color;
-
-            ply_pixel_buffer_fill_with_buffer(pixel_buffer,fpx,px,py);
-
-        }
-    }
-    
     //logo
     rect.width = ply_image_get_width(plugin->image.logo);
     rect.height = ply_image_get_height(plugin->image.logo);
@@ -304,6 +335,13 @@ static void on_draw (void* user_data,
         
         ply_pixel_buffer_fill_with_buffer(pixel_buffer,plugin->status->buffer,rect.x,rect.y);
     }
+
+
+    char livetext[64];
+    sprintf(livetext,"progress: %f",plugin->percent);
+
+    lx_text_print(pixel_buffer,plugin->font,32,32,livetext);
+
 }
 
 static void
@@ -357,11 +395,8 @@ create_plugin (ply_key_file_t* key_file)
     sprintf(filename,"%s/logo.png",path);
     
     plugin->image.logo=ply_image_new(filename);
+    //bloom(ply_image_get_buffer(plugin->image.logo));
 
-    sprintf(filename,"%s/firefly.png",path);
-
-    plugin->image.firefly=ply_image_new(filename);
-    
     //default palette values
     plugin->palette[0]=0xeff0f1ff; //background
     plugin->palette[1]=0xff808080; //text
@@ -425,15 +460,6 @@ create_plugin (ply_key_file_t* key_file)
     }
     
     free(options);
-    
-    for (int n=0;n<32;n++) {
-
-        plugin->fireflies[n].w = frand() * 2.0f * 3.14159f;
-        plugin->fireflies[n].ws = frand() * 0.01f;
-
-        plugin->fireflies[n].r = frand() * 300.0f;
-        plugin->fireflies[n].h = frand() * 32.0f;
-    }
     
     return plugin;
 }
@@ -523,11 +549,6 @@ show_splash_screen (ply_boot_splash_plugin_t* plugin,
     /* load resources */
     if (!ply_image_load(plugin->image.logo)) {
         lx_log_error("Failed to load logo image");
-        return false;
-    }
-
-    if (!ply_image_load(plugin->image.firefly)) {
-        lx_log_error("Failed to load firefly image");
         return false;
     }
 
