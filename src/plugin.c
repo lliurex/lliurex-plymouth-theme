@@ -43,6 +43,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 
 /*
  * Screen
@@ -76,6 +77,7 @@ struct _ply_boot_splash_plugin
     size_t screens;
     
     double percent;
+    time_t startup;
     
     uint32_t palette[LX_MAX_PALETTE];
     
@@ -336,9 +338,11 @@ static void on_draw (void* user_data,
         ply_pixel_buffer_fill_with_buffer(pixel_buffer,plugin->status->buffer,rect.x,rect.y);
     }
 
-
-    char livetext[64];
-    sprintf(livetext,"progress: %f",plugin->percent);
+    char livetext[32];
+    time_t now = time(NULL) - plugin->startup;
+    int min = now/60;
+    int sec = now % 60;
+    sprintf(livetext,"%02d:%02d",min,sec);
 
     lx_text_print(pixel_buffer,plugin->font,32,32,livetext);
 
@@ -460,7 +464,9 @@ create_plugin (ply_key_file_t* key_file)
     }
     
     free(options);
-    
+
+    plugin->startup = time(NULL);
+
     return plugin;
 }
 

@@ -8,9 +8,6 @@ add_subdirectory(src)
 set(LOGO_SVG "${CMAKE_CURRENT_SOURCE_DIR}/logo.svg")
 set(LOGO_PNG "${CMAKE_CURRENT_BINARY_DIR}/logo.png")
 
-set(FFY_SVG "${CMAKE_CURRENT_SOURCE_DIR}/firefly.svg")
-set(FFY_PNG "${CMAKE_CURRENT_BINARY_DIR}/firefly.png")
-
 add_custom_command(
         OUTPUT ${LOGO_PNG}
         COMMAND rsvg-convert -o ${LOGO_PNG} ${LOGO_SVG}
@@ -19,15 +16,7 @@ add_custom_command(
 
 add_custom_target(logo DEPENDS ${LOGO_PNG})
 
-add_custom_command(
-        OUTPUT ${FFY_PNG}
-        COMMAND rsvg-convert -o ${FFY_PNG} ${FFY_SVG}
-        DEPENDS ${FFY_SVG}
-)
-
-add_custom_target(firefly DEPENDS ${FFY_PNG})
-
-add_dependencies(lliurex logo firefly)
+add_dependencies(lliurex logo)
 
 #install stuff
 install(
@@ -36,7 +25,7 @@ install(
 )
 
 install(
-    FILES ${LOGO_PNG} ${FFY_PNG}
+    FILES ${LOGO_PNG}
     DESTINATION share/plymouth/themes/lliurex/
 )
 
