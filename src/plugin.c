@@ -34,6 +34,8 @@
 #include "noise.h"
 #include "texture.h"
 
+#include <libllxgvahwdb.h>
+
 #include <ply-boot-splash-plugin.h>
 #include <ply-logger.h>
 #include <ply-image.h>
@@ -84,6 +86,7 @@ struct _ply_boot_splash_plugin
     lx_font_t* font;
     lx_text_t* message;
     lx_text_t* status;
+    lx_text_t* info;
     
 };
 
@@ -338,6 +341,17 @@ static void on_draw (void* user_data,
         ply_pixel_buffer_fill_with_buffer(pixel_buffer,plugin->status->buffer,rect.x,rect.y);
     }
 
+    //info
+    if (plugin->info) {
+        rect.width = ply_pixel_buffer_get_width(plugin->info->buffer);
+        rect.height = ply_pixel_buffer_get_height(plugin->info->buffer);
+
+        rect.x = width - rect.width - 4;
+        rect.y = height - rect.height - 4;
+
+        ply_pixel_buffer_fill_with_buffer(pixel_buffer,plugin->info->buffer,rect.x,rect.y);
+    }
+
     char livetext[32];
     time_t now = time(NULL) - plugin->startup;
     int min = now/60;
@@ -464,6 +478,19 @@ create_plugin (ply_key_file_t* key_file)
     }
     
     free(options);
+
+    char infotxt[128];
+    int distance = -1;
+    llx_gva_hwdb_t* gvainfo = llx_gva_hwdb_what_db(&distance);
+
+    if (distance == 0) {
+        snprintf(infotxt,128,"%s/%s:%s",gvainfo->vendor,gvainfo->system,gvainfo->what);
+    }
+    else {
+        snprintf(infotxt,128,"%s/%s",gvainfo->vendor,gvainfo->system);
+    }
+
+    plugin->info=lx_text_new(plugin->font,infotxt);
 
     plugin->startup = time(NULL);
 
