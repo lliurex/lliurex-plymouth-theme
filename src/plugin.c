@@ -41,6 +41,7 @@
 #include <ply-image.h>
 #include <ply-label.h>
 
+#include <sys/stat.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -482,12 +483,20 @@ create_plugin (ply_key_file_t* key_file)
     char infotxt[128];
     int distance = -1;
     llx_gva_hwdb_t* gvainfo = llx_gva_hwdb_what_db(&distance);
+    struct stat finfo;
+
+    char* platform_names[] = {"BIOS","UEFI"};
+    char* platform = platform_names[0];
+
+    if (stat("/sys/firmware/efi/fw_vendor",&finfo) == 0) {
+        platform=platform_names[1];
+    }
 
     if (distance == 0) {
-        snprintf(infotxt,128,"%s/%s:%s",gvainfo->vendor,gvainfo->system,gvainfo->what);
+        snprintf(infotxt,128,"%s · %s · %s · %s",platform,gvainfo->vendor,gvainfo->system,gvainfo->what);
     }
     else {
-        snprintf(infotxt,128,"%s/%s",gvainfo->vendor,gvainfo->system);
+        snprintf(infotxt,128,"%s · %s · %s",platform,gvainfo->vendor,gvainfo->system);
     }
 
     plugin->info=lx_text_new(plugin->font,infotxt);
