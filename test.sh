@@ -2,7 +2,7 @@
 
 DURATION=$1
 if [ $# -ne 1 ]; then
-  DURATION=6
+  DURATION=8
 fi
 
 plymouthd --kernel-command-line="quiet splash"

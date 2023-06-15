@@ -5,9 +5,11 @@ pkg_check_modules(PLY_GRAPHICS REQUIRED ply-splash-graphics)
 pkg_check_modules(SYSTEMD REQUIRED libsystemd)
 pkg_check_modules(FREETYPE REQUIRED freetype2)
 
-add_library(lliurex SHARED plugin.c log.c text.c cmdline.c i18.c noise.c)
+find_package(LliurexGvaHwdb REQUIRED)
+
+add_library(lliurex SHARED plugin.c log.c text.c cmdline.c i18.c noise.c texture.c)
 target_include_directories(lliurex PUBLIC ${PLY_CORE_INCLUDE_DIRS} ${PLY_GRAPHICS_INCLUDE_DIRS} ${SYSTEMD_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS})
-target_link_libraries(lliurex ${PLY_CORE_LIBRARIES} ${PLY_GRAPHICS_LIBRARIES} ${SYSTEMD_LIBRARIES} ${FREETYPE_LIBRARIES})
+target_link_libraries(lliurex ${PLY_CORE_LIBRARIES} ${PLY_GRAPHICS_LIBRARIES} ${SYSTEMD_LIBRARIES} ${FREETYPE_LIBRARIES} Lliurex::GvaHwdb)
 
 install(
     TARGETS lliurex

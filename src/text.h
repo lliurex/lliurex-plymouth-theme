@@ -81,4 +81,5 @@ lx_text_t* lx_text_new(lx_font_t* font,const char* str);
 */
 void lx_text_delete(lx_text_t* text);
 
+void lx_text_print(ply_pixel_buffer_t* buffer,lx_font_t* font,int ox,int oy,char* str);
 #endif

@@ -83,7 +83,10 @@ lx_font_t* lx_font_new(const char* path,int px,uint32_t color)
     font->path=strdup(path);
     font->px=px;
     font->space=px/2;
-    font->color=color & 0x00ffffff; //clear alpha
+    font->color=color;// & 0x00ffffff; //clear alpha
+    float red = (color & 0x00ff0000) >> 16;
+    float green = (color & 0x0000ff00) >> 8;
+    float blue = (color & 0x000000ff);
     
     for (int n=0;n<512;n++) {
         memset(&font->glyph[n],0,sizeof(lx_glyph_t));
@@ -142,6 +145,7 @@ lx_font_t* lx_font_new(const char* path,int px,uint32_t color)
         );
         
         font->glyph[n].buffer=ply_pixel_buffer_new(font->glyph[n].width,font->glyph[n].height);
+
         uint32_t* data = ply_pixel_buffer_get_argb32_data(font->glyph[n].buffer);
         
         uint32_t width =font->glyph[n].width;
@@ -149,10 +153,20 @@ lx_font_t* lx_font_new(const char* path,int px,uint32_t color)
         
         for (int j=0;j<height;j++) {
             for (int i=0;i<width;i++) {
-                data[i+j*width] = font->color | (glyph->bitmap.buffer[i+j*width]<<24);
+                float alpha = glyph->bitmap.buffer[i+j*width]/255.0f;
+
+                uint32_t pixel;
+                uint8_t r = red * alpha;
+                uint8_t g = green * alpha;
+                uint8_t b = blue * alpha;
+                uint8_t a = alpha * 255;
+
+                pixel = (a<<24) | (r<<16) | (g<<8) | b;
+
+                data[i+j*width] = pixel;
             }
         }
-        
+
     }
 
     return font;
@@ -267,4 +281,29 @@ void lx_text_delete(lx_text_t* text)
         ply_pixel_buffer_free(text->buffer);
         free(text);
     }
+}
+
+void lx_text_print(ply_pixel_buffer_t* buffer,lx_font_t* font,int ox,int oy,char* str)
+{
+    uint16_t* ustr = create_unicode(str);
+    uint16_t* uc = ustr;
+    int x = ox;
+    int y = oy;
+
+    while (*uc!=0) {
+        uint32_t code = 0x1ff & *uc;
+        uc++;
+
+        lx_glyph_t* glyph = &font->glyph[code];
+
+        if (code==0x20 || glyph->code==0) {
+            x+=font->space;
+            continue;
+        }
+
+        int dif=glyph->height-glyph->top;
+        ply_pixel_buffer_fill_with_buffer(buffer,glyph->buffer,x,y-glyph->top);
+        x+=glyph->width+LX_TEXT_INTER;
+    }
+
 }
