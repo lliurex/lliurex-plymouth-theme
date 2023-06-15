@@ -1,3 +1,9 @@
+lliurex-plymouth-theme (23.0.0.2) focal; urgency=medium
+
+  * Dummy upgrade
+
+ -- Enrique Medina Gremaldos <quiqueiii@gmail.com>  Thu, 15 Jun 2023 16:07:56 +0200
+
 lliurex-plymouth-theme (23.0.0.1) focal; urgency=medium
 
   * Fixed missing deps
