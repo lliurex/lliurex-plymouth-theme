@@ -226,12 +226,19 @@ static void on_draw (void* user_data,
         break;
         
         case PLY_BOOT_SPLASH_MODE_SHUTDOWN:
+        case PLY_BOOT_SPLASH_MODE_REBOOT:
             progress_bar_color=plugin->palette[LX_COLOR_FOREGROUND_2];
         break;
         
         case PLY_BOOT_SPLASH_MODE_UPDATES:
+        case PLY_BOOT_SPLASH_MODE_SYSTEM_UPGRADE:
+        case PLY_BOOT_SPLASH_MODE_FIRMWARE_UPGRADE:
+
             progress_bar_color=plugin->palette[LX_COLOR_FOREGROUND_3];
         break;
+
+        default:
+            progress_bar_color=plugin->palette[LX_COLOR_FOREGROUND_4];
     }
     
     if (screen->background.buffer==NULL) {
@@ -496,7 +503,13 @@ create_plugin (ply_key_file_t* key_file)
         snprintf(infotxt,128,"%s · %s · %s · %s",platform,gvainfo->vendor,gvainfo->system,gvainfo->what);
     }
     else {
-        snprintf(infotxt,128,"%s · %s · %s",platform,llx_gva_hwdb_get_vendor(),llx_gva_hwdb_get_system());
+        char vendor[32];
+        char system[32];
+
+        strncpy(vendor,llx_gva_hwdb_get_vendor(),32);
+        strncpy(system,llx_gva_hwdb_get_system(),32);
+
+        snprintf(infotxt,128,"%s · %s · %s",platform, vendor, system);
     }
 
     plugin->info=lx_text_new(plugin->font,infotxt);
