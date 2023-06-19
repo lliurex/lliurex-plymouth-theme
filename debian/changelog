@@ -1,3 +1,9 @@
+lliurex-plymouth-theme (23.0.1.0) focal; urgency=medium
+
+  * Fixed a bug showing bad vendor/system info
+
+ -- Enrique Medina Gremaldos <quiqueiii@gmail.com>  Mon, 19 Jun 2023 14:42:52 +0200
+
 lliurex-plymouth-theme (23.0.0.2) focal; urgency=medium
 
   * Dummy upgrade
