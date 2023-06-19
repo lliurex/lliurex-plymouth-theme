@@ -1,3 +1,10 @@
+lliurex-plymouth-theme (23.0.2.0) focal; urgency=medium
+
+  * Using always a themed color and not defaulting to black
+  * Fixed bug showing system name
+
+ -- Enrique Medina Gremaldos <quiqueiii@gmail.com>  Mon, 19 Jun 2023 19:46:47 +0200
+
 lliurex-plymouth-theme (23.0.1.0) focal; urgency=medium
 
   * Fixed a bug showing bad vendor/system info
