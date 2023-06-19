@@ -496,7 +496,7 @@ create_plugin (ply_key_file_t* key_file)
         snprintf(infotxt,128,"%s · %s · %s · %s",platform,gvainfo->vendor,gvainfo->system,gvainfo->what);
     }
     else {
-        snprintf(infotxt,128,"%s · %s · %s",platform,gvainfo->vendor,gvainfo->system);
+        snprintf(infotxt,128,"%s · %s · %s",platform,llx_gva_hwdb_get_vendor(),llx_gva_hwdb_get_system());
     }
 
     plugin->info=lx_text_new(plugin->font,infotxt);
