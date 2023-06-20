@@ -487,7 +487,8 @@ create_plugin (ply_key_file_t* key_file)
     
     free(options);
 
-    char infotxt[128];
+    char infotxt[192];
+    memset(infotxt,0,192);
     int distance = -1;
     llx_gva_hwdb_t* gvainfo = llx_gva_hwdb_what_db(&distance);
     struct stat finfo;
@@ -500,16 +501,16 @@ create_plugin (ply_key_file_t* key_file)
     }
 
     if (distance == 0) {
-        snprintf(infotxt,128,"%s · %s · %s · %s",platform,gvainfo->vendor,gvainfo->system,gvainfo->what);
+        snprintf(infotxt,192,"%s · %s · %s · %s",platform,gvainfo->vendor,gvainfo->system,gvainfo->what);
     }
     else {
-        char vendor[32];
-        char system[32];
+        char vendor[64];
+        char system[64];
 
-        strncpy(vendor,llx_gva_hwdb_get_vendor(),32);
-        strncpy(system,llx_gva_hwdb_get_system(),32);
+        strncpy(vendor,llx_gva_hwdb_get_vendor(),64);
+        strncpy(system,llx_gva_hwdb_get_system(),64);
 
-        snprintf(infotxt,128,"%s · %s · %s",platform, vendor, system);
+        snprintf(infotxt,192,"%s · %s · %s",platform, vendor, system);
     }
 
     plugin->info=lx_text_new(plugin->font,infotxt);
