@@ -1,3 +1,9 @@
+lliurex-plymouth-theme (23.0.3.0) focal; urgency=medium
+
+  * Fixed long product/vendor names messing up display
+
+ -- Enrique Medina Gremaldos <quiqueiii@gmail.com>  Tue, 20 Jun 2023 13:18:35 +0200
+
 lliurex-plymouth-theme (23.0.2.0) focal; urgency=medium
 
   * Using always a themed color and not defaulting to black
