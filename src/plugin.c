@@ -322,7 +322,7 @@ static void on_draw (void* user_data,
     rect.height = ply_image_get_height(plugin->image.logo);
     
     rect.x = (width/2) - (rect.width/2);
-    rect.y = (height/2) - (rect.height/2);
+    rect.y = (height/2) - (rect.height/2) - 32;
 
     ply_pixel_buffer_t* lpx = ply_image_get_buffer(plugin->image.logo);
     ply_pixel_buffer_fill_with_buffer(pixel_buffer,lpx,rect.x,rect.y);
