@@ -1,3 +1,9 @@
+lliurex-plymouth-theme (23.1.0.1) noble; urgency=medium
+
+  * Just uploaded to noble, no changes at all (yet)
+
+ -- Enrique Medina Gremaldos <quique@necos.es>  Mon, 30 Sep 2024 10:14:14 +0200
+
 lliurex-plymouth-theme (23.1.0.0) jammy; urgency=medium
 
   * Using a new logo for jammy versions

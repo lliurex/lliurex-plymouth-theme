@@ -2,12 +2,12 @@ Source: lliurex-plymouth-theme
 Section: x11
 Priority: optional
 Maintainer: LliureX Team <lliurex@gva.es>
-Build-Depends: debhelper (>= 10), librsvg2-bin, libplymouth-dev, libsystemd-dev, libfreetype6-dev, cmake, build-essential, pkg-config, libllxgvahwdb-dev
-Standards-Version: 4.1.2
+Build-Depends: debhelper-compat (= 13), librsvg2-bin, libplymouth-dev, libsystemd-dev, libfreetype6-dev, cmake, build-essential, pkg-config, libllxgvahwdb-dev
+Standards-Version: 4.6.0
 
 Package: lliurex-plymouth-theme
 Architecture: all
 Section: x11
 Depends: libplymouth5, libsystemd0, fonts-hack, libllxgvahwdb
-Description: LliureX 21 plymouth theme
- LliureX 21 custom plymouth plugin and theme
+Description: LliureX 25 plymouth theme
+ LliureX 25 custom plymouth plugin and theme
