@@ -2,7 +2,7 @@ Source: lliurex-plymouth-theme
 Section: x11
 Priority: optional
 Maintainer: LliureX Team <lliurex@gva.es>
-Build-Depends: debhelper-compat (= 13), librsvg2-bin, libplymouth-dev, libsystemd-dev, libfreetype6-dev, cmake, build-essential, pkg-config, libllxgvahwdb-dev
+Build-Depends: debhelper-compat (= 13), librsvg2-bin, libplymouth-dev, libsystemd-dev, libfreetype6-dev, cmake, build-essential, pkg-config, libllxgvahwdb-dev, libevdev-dev, libxkbcommon-dev, libudev-dev
 Standards-Version: 4.6.0
 
 Package: lliurex-plymouth-theme
