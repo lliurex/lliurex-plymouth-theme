@@ -40,6 +40,20 @@ void lx_raster_set_color_u32(uint32_t color)
     pixel = color;
 }
 
+void lx_raster_set_color_4f(float r,float g, float b, float a)
+{
+    uint32_t ir = r * 255;
+    uint32_t ig = g * 255;
+    uint32_t ib = b * 255;
+    uint32_t ia = a * 255;
+
+    ig = ig << 8;
+    ib = ib << 16;
+    ia = ia << 24;
+
+    pixel = ia | ib | ig | ir;
+}
+
 static int min(int a,int b)
 {
     return (a<b) ? a:b;

@@ -289,27 +289,54 @@ static void on_draw (void* user_data,
                 for (int i=-1;i<nw+1;i++) {
                     int x = offset + (i * tile_width);
                     int y = j * (tile_height/2);
-                    if (offset==0)
-                        lx_raster_set_color_u32(0xffff9999);
-                    else
-                        lx_raster_set_color_u32(0xffff99ff);
+
+                    float value = 4 * lx_noise_perlin_2d(abs(x),abs(y),0.1,2);
+                    int block_height = 64 * (int)value;
+
+                    // top side
+                    lx_raster_set_color_4f(0.4,0.4,0.4,1);
 
                     lx_vertex_2i_t triangle[3];
                     triangle[0].x = x;
-                    triangle[0].y = y + (tile_height/2);
+                    triangle[0].y = y + (tile_height/2) - block_height;
 
                     triangle[1].x = x + (tile_width/2);
-                    triangle[1].y = y ;
+                    triangle[1].y = y - block_height;
 
+                    triangle[2].x = x + tile_width;
+                    triangle[2].y = y + (tile_height/2) - block_height;
+
+                    lx_raster_triangle(triangle);
+
+                    triangle[1].x = x + (tile_width/2);
+                    triangle[1].y = y + tile_height - block_height;
+
+                    lx_raster_triangle(triangle);
+
+                    // left side
+                    lx_raster_set_color_4f(0.3,0.3,0.3,1);
+                    triangle[2].x = x ;
+                    triangle[2].y = y + (tile_height/2);
+
+                    lx_raster_triangle(triangle);
+
+                    triangle[0].x = x + (tile_width/2);
+                    triangle[0].y = y + (tile_height/2);
+
+                    lx_raster_triangle(triangle);
+
+                    // right side
+                    lx_raster_set_color_4f(0.2,0.2,0.2,1);
                     triangle[2].x = x + tile_width;
                     triangle[2].y = y + (tile_height/2);
 
                     lx_raster_triangle(triangle);
 
-                    triangle[1].x = x + (tile_width/2);
-                    triangle[1].y = y + tile_height;
+                    triangle[0].x = x + tile_width;
+                    triangle[0].y = y + (tile_height/2) - block_height;
 
                     lx_raster_triangle(triangle);
+
                 }
             }
 

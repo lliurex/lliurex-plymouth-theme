@@ -27,4 +27,5 @@ typedef struct lx_vertex_2i
 
 extern void lx_raster_init(uint32_t* buffer,int width,int height, uint32_t flags);
 extern void lx_raster_set_color_u32(uint32_t color);
+extern void lx_raster_set_color_4f(float r,float g, float b, float a);
 extern void lx_raster_triangle(lx_vertex_2i_t* triangle);
