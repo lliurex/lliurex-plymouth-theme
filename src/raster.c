@@ -16,6 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "raster.h"
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <math.h>
@@ -48,7 +50,12 @@ static int max(int a,int b)
     return (a>b) ? a:b;
 }
 
-void lx_raster_triangle(lx_vertex_2i* triangle)
+static int32_t orient(int32_t x0, int32_t y0, int32_t x1,int32_t y1, int32_t x2, int32_t y2)
+{
+    return (x1-x0)*(y2-y0) - (y1-y0)*(x2-x0);
+}
+
+void lx_raster_triangle(lx_vertex_2i_t* triangle)
 {
     // top-left/bottom-right
     lx_vertex_2i_t top = triangle[0];
@@ -68,8 +75,20 @@ void lx_raster_triangle(lx_vertex_2i* triangle)
     bottom.x = min(bottom.x,screen_width - 1);
     bottom.y = min(bottom.y,screen_height - 1);
 
-    for (int j = top.y; j<=bottom.y;j++) {
-        for (int i = top.x; i<=bottom.x;i++) {
+    for (int32_t j = top.y; j<=bottom.y;j++) {
+        for (int32_t i = top.x; i<=bottom.x;i++) {
+            int32_t a1 = orient(triangle[1].x,triangle[1].y,triangle[2].x,triangle[2].y,i,j);
+            int32_t a2 = orient(triangle[2].x,triangle[2].y,triangle[0].x,triangle[0].y,i,j);
+            int32_t a3 = orient(triangle[0].x,triangle[0].y,triangle[1].x,triangle[1].y,i,j);
+
+            if (a1>=0 && a2>=0 && a3>=0) {
+                data[i+j*screen_width] = pixel;
+                continue;
+            }
+
+            if (a1<0 && a2<0 && a3<0) {
+                data[i+j*screen_width] = pixel;
+            }
 
         }
     }

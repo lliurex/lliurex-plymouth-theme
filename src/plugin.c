@@ -33,6 +33,7 @@
 #include "i18.h"
 #include "noise.h"
 #include "texture.h"
+#include "raster.h"
 
 #include <libllxgvahwdb.h>
 
@@ -266,10 +267,49 @@ static void on_draw (void* user_data,
             
             uint32_t* data = ply_pixel_buffer_get_argb32_data(screen->background.buffer);
             ply_rectangle_t rect;
-    
+            /*
             for (int j=0;j<height;j++) {
                 for (int i=0;i<width;i++) {
                     data[i+j*width] = lx_texture_get(i,j,64);
+                }
+            }
+            */
+
+            lx_raster_init(data,mw,mh,0);
+
+            int tile_width = 128;
+            int tile_height = 64;
+
+            int nw = mw / tile_width;
+            int nh = (mh / tile_height) * 2;
+
+            for (int j=-1;j<nh+1;j++) {
+                int offset = (j%2 == 0) ? 0 : (tile_width/2);
+
+                for (int i=-1;i<nw+1;i++) {
+                    int x = offset + (i * tile_width);
+                    int y = j * (tile_height/2);
+                    if (offset==0)
+                        lx_raster_set_color_u32(0xffff9999);
+                    else
+                        lx_raster_set_color_u32(0xffff99ff);
+
+                    lx_vertex_2i_t triangle[3];
+                    triangle[0].x = x;
+                    triangle[0].y = y + (tile_height/2);
+
+                    triangle[1].x = x + (tile_width/2);
+                    triangle[1].y = y ;
+
+                    triangle[2].x = x + tile_width;
+                    triangle[2].y = y + (tile_height/2);
+
+                    lx_raster_triangle(triangle);
+
+                    triangle[1].x = x + (tile_width/2);
+                    triangle[1].y = y + tile_height;
+
+                    lx_raster_triangle(triangle);
                 }
             }
 
