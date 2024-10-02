@@ -48,7 +48,7 @@ void lx_raster_set_color_4f(float r,float g, float b, float a)
     uint32_t ia = a * 255;
 
     ig = ig << 8;
-    ib = ib << 16;
+    ir = ir << 16;
     ia = ia << 24;
 
     pixel = ia | ib | ig | ir;
@@ -106,5 +106,41 @@ void lx_raster_triangle(lx_vertex_2i_t* triangle)
 
         }
     }
+}
 
+/*
+ * credits: https://gist.github.com/bert/1085538
+ */
+void lx_raster_line(lx_vertex_2i_t* line)
+{
+    int x0 = line[0].x;
+    int y0 = line[0].y;
+    int x1 = line[1].x;
+    int y1 = line[1].y;
+
+    int dx =  abs (x1 - x0), sx = x0 < x1 ? 1 : -1;
+    int dy = -abs (y1 - y0), sy = y0 < y1 ? 1 : -1;
+    int err = dx + dy, e2; /* error value e_xy */
+
+    while (1) {
+        if (x0 >= 0 && y0 >=0 && x0<(screen_width-1) && y0<(screen_height-1)) {
+            data[x0+y0*screen_width] = pixel;
+        }
+
+        if (x0 == x1 && y0 == y1) {
+            break;
+        }
+
+        e2 = 2 * err;
+
+        if (e2 >= dy) {
+            err += dy;
+            x0 += sx;
+        } /* e_xy+e_x > 0 */
+
+        if (e2 <= dx) {
+            err += dx;
+            y0 += sy;
+        } /* e_xy+e_y < 0 */
+    }
 }
