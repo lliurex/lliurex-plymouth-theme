@@ -1,3 +1,9 @@
+lliurex-plymouth-theme (25.0.0.0~preview1) noble; urgency=medium
+
+  * New 25 look and feel theme
+
+ -- Enrique Medina Gremaldos <quique@necos.es>  Thu, 03 Oct 2024 16:47:43 +0200
+
 lliurex-plymouth-theme (23.1.0.2) noble; urgency=medium
 
   * Just uploaded to noble, no changes at all (yet)
