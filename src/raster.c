@@ -144,3 +144,17 @@ void lx_raster_line(lx_vertex_2i_t* line)
         } /* e_xy+e_y < 0 */
     }
 }
+
+void lx_get_color(uint32_t value,lx_color_t* color)
+{
+    uint32_t b = value & 0x000000ff;
+    uint32_t g = (value & 0x0000ff00)>>8;
+    uint32_t r = (value & 0x00ff0000)>>16;
+    uint32_t a = (value & 0xff000000)>>24;
+
+    color->data[0] = 255.0f/b;
+    color->data[1] = 255.0f/g;
+    color->data[2] = 255.0f/r;
+    color->data[3] = 255.0f/a;
+}
+

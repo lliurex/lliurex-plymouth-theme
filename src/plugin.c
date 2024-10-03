@@ -292,13 +292,16 @@ static void on_draw (void* user_data,
                     int x = offset + (i * tile_width);
                     int y = j * (tile_height/2);
 
-                    float value = 4 * lx_noise_perlin_2d(abs(x),abs(y),0.1,2);
+                    float value = 4 * lx_noise_perlin_2d(abs(x),abs(y),0.01,2);
                     int block_height = 16 * (int)value;
+
+                    float light =  lx_noise_perlin_2d(abs(x),abs(y),0.001,4);
+                    light = 0.1f + ((light*light) * 0.9f);
 
                     lx_vertex_2i_t triangle[3];
 
                     // top side
-                    lx_raster_set_color_4f(0.4,0.4,0.4,1);
+                    lx_raster_set_color_4f(light,light,light,1);
 
                     triangle[0].x = x;
                     triangle[0].y = y + (tile_height/2) - block_height;
@@ -317,7 +320,8 @@ static void on_draw (void* user_data,
                     lx_raster_triangle(triangle);
 
                     // left side
-                    lx_raster_set_color_4f(0.3,0.3,0.3,1);
+                    lx_raster_set_color_4f(light*0.9,light*0.9,light*0.9,1);
+
                     triangle[0].x = x;
                     triangle[0].y = y + (tile_height/2) ;
 
@@ -335,7 +339,7 @@ static void on_draw (void* user_data,
                     lx_raster_triangle(triangle);
 
                     // right side
-                    lx_raster_set_color_4f(0.2,0.2,0.2,1);
+                    lx_raster_set_color_4f(light*0.8,light*0.8,light*0.8,1);
                     triangle[2].x = x + tile_width;
                     triangle[2].y = y + (tile_height/2) - block_height;
 
@@ -370,6 +374,28 @@ static void on_draw (void* user_data,
                     line[1].x = x + (tile_width/2);
                     line[1].y = y  - block_height;
                     lx_raster_line(line);
+
+                    line[0].x = x;
+                    line[0].y = y + (tile_height/2) - block_height;
+
+                    line[1].x = x ;
+                    line[1].y = y + (tile_height/2);
+                    lx_raster_line(line);
+
+                    line[0].x = x + tile_width;
+                    line[0].y = y + (tile_height/2) - block_height;
+
+                    line[1].x = x + tile_width ;
+                    line[1].y = y + (tile_height/2);
+                    lx_raster_line(line);
+
+                    line[0].x = x + (tile_width/2);
+                    line[0].y = y + tile_height - block_height;
+
+                    line[1].x = x + (tile_width/2) ;
+                    line[1].y = y + tile_height;
+                    lx_raster_line(line);
+
                 }
             }
 
