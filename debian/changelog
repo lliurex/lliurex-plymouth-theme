@@ -1,3 +1,9 @@
+lliurex-plymouth-theme (25.0.1.0) noble; urgency=medium
+
+  * Early fix for the crash
+
+ -- Enrique Medina Gremaldos <quique@necos.es>  Tue, 29 Apr 2025 11:15:57 +0200
+
 lliurex-plymouth-theme (25.0.0.0~preview1) noble; urgency=medium
 
   * New 25 look and feel theme
