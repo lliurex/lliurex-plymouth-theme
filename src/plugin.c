@@ -513,6 +513,10 @@ on_timeout (ply_boot_splash_plugin_t* plugin)
     //update all screens!
     for (size_t n=0;n<plugin->screens;n++) {
         
+        if (!plugin->screen[n].display) {
+            continue;
+        }
+
         ply_pixel_display_draw_area(plugin->screen[n].display,
             0,0,
             ply_pixel_display_get_width(plugin->screen[n].display),
@@ -711,6 +715,7 @@ remove_pixel_display (ply_boot_splash_plugin_t* plugin,
     
     for (size_t n=0;n<LX_MAX_SCREENS;n++) {
         if (plugin->screen[n].display==display) {
+            lx_log_info("removed display:%d",n);
             plugin->screen[n].display=NULL;
             plugin->screens--;
         }
