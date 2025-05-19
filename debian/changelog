@@ -1,3 +1,10 @@
+lliurex-plymouth-theme (25.0.2.0) noble; urgency=medium
+
+  * Fix random crash when display is removed (pre-scheduled redraw)
+  * Fix last row not shown on some screens
+
+ -- Enrique Medina Gremaldos <quique@necos.es>  Mon, 19 May 2025 12:25:02 +0200
+
 lliurex-plymouth-theme (25.0.1.0) noble; urgency=medium
 
   * Early fix for the crash
