@@ -203,6 +203,11 @@ static void on_draw (void* user_data,
     int height,
     ply_pixel_display_t* pixel_display)
 {
+    if (!pixel_display) {
+         lx_log_error("Invalid pixel display");
+         return;
+    }
+
     ply_boot_splash_plugin_t* plugin = (ply_boot_splash_plugin_t*)user_data;
     lx_screen_t* screen=NULL;
     
@@ -249,6 +254,10 @@ static void on_draw (void* user_data,
         bool found=false;
         
         for (size_t n=0;n<plugin->screens;n++) {
+            if (!plugin->screen[n].display) {
+                lx_log_error("display no longer there");
+                continue;
+            }
             int nw = ply_pixel_display_get_width(plugin->screen[n].display);
             int nh = ply_pixel_display_get_height(plugin->screen[n].display);
             
@@ -283,7 +292,7 @@ static void on_draw (void* user_data,
             int tile_height = 64;
 
             int nw = mw / tile_width;
-            int nh = (mh / tile_height) * 2;
+            int nh = ((mh / (float)tile_height) * 2.0f) + 0.5f;
 
             for (int j=-1;j<nh+1;j++) {
                 int offset = (j%2 == 0) ? 0 : (tile_width/2);
